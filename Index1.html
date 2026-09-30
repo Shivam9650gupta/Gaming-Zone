@@ -1,0 +1,2281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0C0D10">
+<title>Cafe</title>
+<style>
+  :root {
+    --bg: #0C0D10;
+    --surface: #16181D;
+    --surface2: #1D2026;
+    --field: #0F1014;
+    --line: #262A31;
+    --line2: #333843;
+    --ink: #F2EFE6;
+    --ink2: #A8AEBB;
+    --mute: #757C8A;
+    --red: #FF4D4D;
+    --accSoft: rgba(255,77,77,.12);
+    --accLine: rgba(255,77,77,.4);
+    --bad: #FF5A5A;
+    --green: #2FD07A;
+    --amber: #FFB020;
+    --blue: #4DA3FF;
+    --safe: env(safe-area-inset-bottom, 0px);
+    --top: env(safe-area-inset-top, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; overscroll-behavior-y: none;
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  button { font-family: inherit; }
+  button:focus-visible, .chip:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+  .wrap { padding-bottom: calc(92px + var(--safe)); }
+
+  header {
+    position: sticky; top: 0; z-index: 30;
+    padding: calc(14px + var(--top)) 18px 12px;
+    background: linear-gradient(180deg, var(--bg) 72%, rgba(12,13,16,0));
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; object-fit: cover; flex: 0 0 auto; }
+  .brand .bn { font-size: 19px; font-weight: 800; letter-spacing: -.2px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand .bn i { font-style: normal; color: var(--red); }
+  .brand .bt { display: block; font-size: 12px; font-weight: 500; color: var(--mute); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hdr-r { display: flex; align-items: center; gap: 8px; padding-top: 3px; flex: 0 0 auto; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px;
+    font-size: 12px; font-weight: 600; color: var(--ink2);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 999px; cursor: pointer;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 3px rgba(47,208,122,.16); }
+  .dot.stale { background: var(--amber); box-shadow: 0 0 0 3px rgba(255,176,32,.16); }
+  .dot.dead { background: var(--bad); box-shadow: 0 0 0 3px rgba(255,90,90,.16); }
+  .icon {
+    width: 34px; height: 34px; flex: 0 0 auto; border-radius: 999px;
+    background: var(--surface); border: 1px solid var(--line); color: var(--ink2);
+    font-size: 15px; line-height: 1; cursor: pointer; display: grid; place-items: center;
+  }
+  .icon:active { background: var(--surface2); }
+
+  .figs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin: 0 18px 16px; background: var(--line); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+  .fig { background: var(--surface); padding: 13px 14px 14px; min-width: 0; }
+  .fig small { display: block; font-size: 12px; color: var(--mute); font-weight: 500; }
+  .fig b { display: block; font-size: 22px; font-weight: 750; letter-spacing: -.8px; margin-top: 2px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fig u { display: block; text-decoration: none; font-size: 11px; color: var(--mute); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .fig.money b { color: var(--green); }
+
+  .banner { margin: 0 18px 14px; padding: 12px 14px; border-radius: 14px; background: rgba(77,163,255,.09); border: 1px solid rgba(77,163,255,.35); cursor: pointer; font-size: 14px; }
+  .banner b { color: var(--blue); }
+  .banner small { display: block; color: var(--ink2); font-size: 12.5px; margin-top: 1px; }
+
+  .grid { padding: 0 18px; display: grid; gap: 14px; }
+  @media (min-width: 760px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 1150px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  .st {
+    position: relative; overflow: hidden; cursor: pointer;
+    background: var(--surface); border: 1px solid var(--line);
+    border-radius: 20px; padding: 16px 18px 18px 22px;
+    transition: transform .12s ease, border-color .2s ease;
+  }
+  .st:active { transform: scale(.99); }
+  .st .rail { position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--line2); }
+  .st.free .rail { background: var(--green); }
+  .st.busy .rail { background: var(--amber); }
+  .st.paused .rail { background: var(--blue); }
+  .st.paused { border-color: rgba(77,163,255,.4); }
+  .st.warn { border-color: rgba(255,176,32,.45); }
+  .st.over { border-color: rgba(255,90,90,.45); background: linear-gradient(180deg, rgba(255,90,90,.07), var(--surface) 60%); }
+  .st.over .rail { background: var(--bad); animation: pulse 1.4s ease-in-out infinite; }
+  .st.repair { background: repeating-linear-gradient(135deg, var(--surface) 0 14px, #14161A 14px 28px); }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .st .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .st h3 { margin: 0; font-size: 17px; font-weight: 700; letter-spacing: -.2px; }
+  .st h3 small { font-size: 12px; font-weight: 600; color: var(--mute); margin-left: 6px; }
+  .state { font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; white-space: nowrap; }
+  .state.free { background: rgba(47,208,122,.13); color: var(--green); }
+  .state.busy { background: rgba(255,176,32,.13); color: var(--amber); }
+  .state.paused { background: rgba(77,163,255,.15); color: var(--blue); }
+  .state.over { background: var(--bad); color: #fff; }
+  .state.repair { background: var(--surface2); color: var(--ink2); }
+  .state.sync { background: var(--surface2); color: var(--amber); margin-right: 6px; }
+  .who { margin-top: 13px; font-size: 18px; font-weight: 650; letter-spacing: -.2px; }
+  .meta { margin-top: 3px; font-size: 13px; color: var(--mute); display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+  .meta em { font-style: normal; }
+  .meta i { width: 1px; height: 11px; background: var(--line2); display: inline-block; }
+  .meta b { color: var(--ink2); font-weight: 650; }
+  .clockrow { display: flex; align-items: baseline; justify-content: space-between; margin-top: 14px; gap: 10px; }
+  .clock { font-size: 42px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -2px; line-height: 1; }
+  .clock.warn { color: var(--amber); }
+  .clock.over { color: var(--bad); }
+  .clock.paused { color: var(--blue); }
+  .clocklbl { font-size: 13px; color: var(--mute); text-align: right; }
+  .track { margin-top: 14px; height: 5px; border-radius: 999px; background: var(--surface2); overflow: hidden; }
+  .fill { height: 100%; background: var(--amber); border-radius: 999px; transition: width 1s linear; }
+  .fill.over { background: var(--bad); }
+  .fill.paused { background: var(--blue); }
+  .acts { display: flex; gap: 8px; margin-top: 14px; }
+  .mbtn {
+    flex: 1; padding: 11px 8px; border-radius: 12px; border: 1px solid var(--line2);
+    background: var(--field); color: var(--ink); font-weight: 650; font-size: 13.5px; cursor: pointer;
+  }
+  .mbtn:active { background: var(--surface2); }
+  .mbtn.primary { background: var(--red); border-color: var(--red); color: #fff; }
+  .mbtn.blue { border-color: rgba(77,163,255,.5); color: var(--blue); background: rgba(77,163,255,.1); }
+  .mbtn.on { border-color: var(--red); background: var(--accSoft); }
+  .idle { margin-top: 15px; font-size: 15px; color: var(--ink2); display: flex; align-items: center; gap: 10px; }
+  .plus { width: 26px; height: 26px; border-radius: 50%; border: 1px dashed var(--line2); color: var(--mute); display: grid; place-items: center; font-size: 15px; }
+  .bk { margin-top: 12px; padding: 9px 12px; border-radius: 12px; background: rgba(77,163,255,.09); border: 1px solid rgba(77,163,255,.3); font-size: 13px; color: var(--ink2); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .bk b { color: var(--blue); font-weight: 700; }
+
+  .sec { padding: 24px 18px 0; }
+  .sec h4 { font-size: 13px; color: var(--mute); font-weight: 600; margin: 0 0 6px; }
+  .rrow { display: flex; justify-content: space-between; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid var(--line); }
+  .rrow:last-child { border-bottom: 0; }
+  .rrow .l { min-width: 0; }
+  .rrow .l b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rrow .l small, .rrow .r small { display: block; font-size: 12px; color: var(--mute); }
+  .rrow .r { text-align: right; flex: 0 0 auto; }
+  .rrow .r b { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .qrow { padding: 13px 0; border-bottom: 1px solid var(--line); }
+  .qrow:last-child { border-bottom: 0; }
+  .qrow .l b { font-size: 15px; font-weight: 650; }
+  .qrow .l .tm { color: var(--blue); margin-right: 8px; font-variant-numeric: tabular-nums; }
+  .qrow .l small { display: block; font-size: 12.5px; color: var(--mute); margin-top: 1px; }
+  .qrow .late { color: var(--amber); font-weight: 700; }
+  .rowacts { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+  .tiny { padding: 7px 12px; font-size: 12.5px; border-radius: 9px; border: 1px solid var(--line2); background: transparent; color: var(--ink2); font-weight: 650; cursor: pointer; }
+  .tiny.go { border-color: rgba(47,208,122,.45); color: var(--green); }
+  .tiny.bad { border-color: rgba(255,90,90,.35); color: var(--bad); }
+  .tiny.armed { background: var(--bad); color: #fff; border-color: var(--bad); }
+  .day { font-size: 12px; font-weight: 700; color: var(--ink2); margin: 14px 0 0; }
+  .empty { color: var(--mute); font-size: 14px; padding: 16px 0; }
+
+  .search { padding: 0 18px 12px; }
+  .chipsrow { display: flex; gap: 8px; padding: 0 18px 16px; overflow-x: auto; scrollbar-width: none; }
+  .chipsrow::-webkit-scrollbar { display: none; }
+  .gf { flex: 0 0 auto; padding: 9px 15px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; font-weight: 600; color: var(--ink2); cursor: pointer; }
+  .gf.sel { background: var(--ink); border-color: var(--ink); color: #0C0D10; }
+  .glist { padding: 0 18px; display: grid; gap: 10px; }
+  .g { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
+  .g h5 { margin: 0 0 11px; font-size: 15px; font-weight: 650; }
+  .cons { display: flex; gap: 7px; flex-wrap: wrap; }
+  .cn { flex: 1 1 70px; text-align: center; font-size: 12px; font-weight: 650; padding: 7px 4px; border-radius: 9px; background: var(--surface2); color: #4B515D; }
+  .cn.on { background: rgba(47,208,122,.14); color: var(--green); }
+
+  nav {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    background: rgba(14,15,19,.92); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+    border-top: 1px solid var(--line);
+    display: flex; padding: 9px 10px calc(10px + var(--safe));
+  }
+  nav button {
+    flex: 1; background: none; border: 0; color: var(--mute); cursor: pointer;
+    font-size: 12px; font-weight: 600;
+    display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 6px 0; border-radius: 12px;
+  }
+  nav button span { width: 18px; height: 18px; display: block; border: 2px solid currentColor; }
+  nav .ic1 { border-radius: 5px; }
+  nav .ic2 { border-radius: 50%; }
+  nav .ic3 { border-radius: 5px; border-style: dashed !important; }
+  nav .ic4 { border-radius: 50% 50% 5px 5px; }
+  nav button.sel { color: var(--ink); }
+
+  .sheet { position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 60; display: none; align-items: flex-end; justify-content: center; }
+  .sheet.on { display: flex; }
+  .panel {
+    background: var(--surface); width: 100%; max-width: 540px; border-radius: 24px 24px 0 0;
+    padding: 10px 18px calc(20px + var(--safe)); max-height: 96vh; overflow-y: auto;
+    border-top: 1px solid var(--line2); animation: rise .2s cubic-bezier(.2,.8,.3,1);
+  }
+  @media (min-width: 600px) and (min-height: 620px) {
+    .sheet { align-items: center; padding: 20px; }
+    .panel { border-radius: 22px; border: 1px solid var(--line2); padding-bottom: 20px; max-height: 92vh; }
+    .grab { display: none; }
+  }
+  @keyframes rise { from { transform: translateY(20px); } }
+  .grab { width: 40px; height: 4px; border-radius: 999px; background: var(--line2); margin: 0 auto 14px; }
+  .panel h2 { margin: 0 0 2px; font-size: 19px; font-weight: 750; letter-spacing: -.4px; }
+  .panel p.sub { margin: 0; color: var(--mute); font-size: 12.5px; }
+  label { display: block; font-size: 12px; color: var(--ink2); font-weight: 600; margin: 13px 0 6px; }
+  input, select {
+    width: 100%; padding: 11px 13px; font-size: 16px; font-family: inherit; border-radius: 11px;
+    border: 1px solid var(--line2); background: var(--field); color: var(--ink); outline: none;
+  }
+  input::placeholder { color: #5A606C; }
+  input:focus, select:focus { border-color: var(--red); }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .chips { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .chips.four { grid-template-columns: repeat(2, 1fr); }
+  @media (min-width: 440px) { .chips.four { grid-template-columns: repeat(4, 1fr); } }
+  .chip { padding: 9px 6px; text-align: center; border-radius: 11px; min-width: 0; border: 1px solid var(--line2); background: var(--field); cursor: pointer; }
+  .chip.sel { border-color: var(--red); background: var(--accSoft); }
+  .chip.off { opacity: .32; cursor: default; }
+  .chip b { display: block; font-size: 14px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip small { display: block; color: var(--mute); font-size: 11.5px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chip.sel small { color: var(--ink2); }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  @media (max-width: 380px) { .seg { grid-template-columns: repeat(2, 1fr); } }
+  .seg .mbtn { padding: 10px 4px; font-size: 13px; }
+  .subpanel { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--field); }
+  .subpanel h6 { margin: 0 0 8px; font-size: 12px; font-weight: 650; color: var(--ink2); }
+  .mi { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--line); }
+  .mi:last-child { border-bottom: 0; }
+  .mi b { font-size: 14px; font-weight: 600; }
+  .mi small { display: block; font-size: 12px; color: var(--mute); }
+  .step { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+  .step button { width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line2); background: var(--surface); color: var(--ink); font-size: 17px; font-weight: 700; cursor: pointer; }
+  .step span { min-width: 18px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .actions { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 16px; }
+  .actions.split { grid-template-columns: 1fr 1fr; }
+  .btn { width: 100%; margin: 0; padding: 14px; border: 0; border-radius: 12px; background: var(--red); color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .btn:active { opacity: .86; }
+  .btn:disabled { opacity: .45; }
+  .btn.ghost { background: transparent; border: 1px solid var(--line2); color: var(--ink2); padding: 11px; font-size: 13.5px; font-weight: 600; }
+  .btn.warn { background: transparent; border: 1px solid rgba(255,90,90,.35); color: var(--bad); padding: 11px; font-size: 13.5px; font-weight: 600; }
+  .btn.warn.armed { background: var(--bad); color: #fff; }
+  .bill { background: var(--field); border: 1px solid var(--line); border-radius: 14px; padding: 12px 15px; margin-top: 12px; }
+  .bill .r { display: flex; justify-content: space-between; gap: 12px; padding: 4px 0; font-size: 13.5px; color: var(--ink2); }
+  .bill .r span:last-child { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; }
+  .bill .r.ot span, .bill .r.ot span:last-child { color: var(--amber); }
+  .bill .r.pz span, .bill .r.pz span:last-child { color: var(--blue); }
+  .bill .r.gd span, .bill .r.gd span:last-child { color: var(--green); }
+  .bill .r.tot { border-top: 1px solid var(--line); margin-top: 8px; padding-top: 10px; align-items: baseline; }
+  .bill .r.tot span:last-child { font-size: 26px; font-weight: 750; color: var(--ink); letter-spacing: -1px; }
+  .bill .rm { background: none; border: 0; color: var(--bad); font-size: 15px; cursor: pointer; padding: 0 0 0 8px; }
+  .err { background: rgba(255,90,90,.1); border: 1px solid rgba(255,90,90,.35); color: #FFB3B3; padding: 10px 12px; border-radius: 11px; font-size: 13.5px; margin-top: 12px; }
+  .warnbox { background: rgba(255,176,32,.1); border: 1px solid rgba(255,176,32,.4); color: #FFD48A; padding: 10px 12px; border-radius: 11px; font-size: 13.5px; margin-top: 12px; }
+  .hint { font-size: 12px; color: var(--green); margin-top: 5px; min-height: 15px; }
+  .hint.neutral { color: var(--mute); }
+
+  .boot { padding: 0 18px; }
+  .sk { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; height: 150px; margin-bottom: 14px; position: relative; overflow: hidden; }
+  .sk::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255,255,255,.035), transparent); animation: shim 1.3s infinite; }
+  @keyframes shim { to { transform: translateX(100%); } }
+  .bootmsg { padding: 34px 18px; text-align: center; color: var(--mute); font-size: 14px; }
+
+  .toast {
+    position: fixed; left: 14px; right: 14px; top: calc(12px + var(--top)); z-index: 80; max-width: 540px; margin: 0 auto;
+    background: var(--surface2); border: 1px solid var(--line2); color: var(--ink);
+    padding: 14px 16px; border-radius: 16px; font-size: 15px; font-weight: 650;
+    box-shadow: 0 16px 40px rgba(0,0,0,.55); cursor: pointer; animation: drop .22s cubic-bezier(.2,.8,.3,1);
+  }
+  .toast small { display: block; font-weight: 500; color: var(--ink2); margin-top: 2px; font-size: 13px; }
+  .toast.warn { border-color: rgba(255,176,32,.5); background: linear-gradient(180deg, rgba(255,176,32,.14), var(--surface2)); }
+  .toast.end { border-color: rgba(255,90,90,.55); background: linear-gradient(180deg, rgba(255,90,90,.16), var(--surface2)); }
+  .toast.good { border-color: rgba(47,208,122,.45); background: linear-gradient(180deg, rgba(47,208,122,.13), var(--surface2)); }
+  @keyframes drop { from { transform: translateY(-14px); opacity: 0; } }
+
+  .tog { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 15px 0; border-bottom: 1px solid var(--line); }
+  .tog b { display: block; font-size: 15px; font-weight: 600; }
+  .tog small { color: var(--mute); font-size: 12.5px; }
+  .sw { width: 50px; height: 30px; border-radius: 999px; background: var(--surface2); border: 1px solid var(--line2); position: relative; cursor: pointer; flex: 0 0 auto; }
+  .sw i { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--mute); transition: all .18s ease; }
+  .sw.on { background: var(--accSoft); border-color: var(--red); }
+  .sw.on i { left: 23px; background: var(--red); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="bootData" hidden data-api="<?= apiUrl ?>" data-brand="<?= brandJson ?>"></div>
+
+<header>
+  <div class="brand" id="brand"><div><div class="bn"><i>Cafe</i></div><span class="bt"></span></div></div>
+  <div class="hdr-r">
+    <div class="pill" id="syncPill"><span class="dot" id="dot"></span><span id="syncTxt">connecting</span></div>
+    <button class="icon" id="btnRefresh" aria-label="Refresh">&#10227;</button>
+    <button class="icon" id="btnCfg" aria-label="Settings">&#9881;</button>
+  </div>
+</header>
+
+<div id="toast" class="toast hidden"></div>
+
+<div id="boot" class="boot">
+  <div class="sk"></div>
+  <div class="sk"></div>
+  <div class="sk"></div>
+</div>
+
+<div class="wrap hidden" id="app">
+
+  <div id="tab-consoles">
+    <div class="figs">
+      <div class="fig"><small>Sessions</small><b id="kSess">0</b><u>today</u></div>
+      <div class="fig money"><small>Collected</small><b id="kRev">0</b><u id="kOpen">0 running</u></div>
+      <div class="fig"><small>Free</small><b id="kFree">0</b><u id="kFreeNote">stations</u></div>
+    </div>
+    <div id="waitBanner" class="banner hidden"></div>
+    <div class="grid" id="grid"></div>
+    <div class="sec">
+      <h4>Recently closed</h4>
+      <div id="recent"></div>
+    </div>
+  </div>
+
+  <div id="tab-queue" class="hidden">
+    <div class="sec" style="padding-top:0">
+      <div class="actions split" style="margin-top:0">
+        <button class="btn" id="btnAddWait">Add to waitlist</button>
+        <button class="btn ghost" id="btnAddBook">New booking</button>
+      </div>
+    </div>
+    <div class="sec"><h4>Waiting now</h4><div id="waitList"></div></div>
+    <div class="sec"><h4>Upcoming bookings</h4><div id="bookList"></div></div>
+  </div>
+
+  <div id="tab-games" class="hidden">
+    <div class="search"><input id="gSearch" type="search" placeholder="Search the library"></div>
+    <div class="chipsrow" id="gFilters"></div>
+    <div class="glist" id="glist"></div>
+  </div>
+
+  <div id="tab-money" class="hidden">
+    <div class="figs">
+      <div class="fig money"><small>Collected</small><b id="mRev">0</b><u>today</u></div>
+      <div class="fig"><small>Spent</small><b id="mExp">0</b><u>today</u></div>
+      <div class="fig"><small>Net</small><b id="mNet">0</b><u>today</u></div>
+    </div>
+    <div class="sec" style="padding-top:2px">
+      <div class="actions split" style="margin-top:0">
+        <button class="btn" id="btnCounter">Counter sale</button>
+        <button class="btn ghost" id="btnAddExp">Add an expense</button>
+      </div>
+    </div>
+    <div class="sec">
+      <h4>Today</h4>
+      <div class="rrow"><div class="l"><b>Overtime billed</b><small>extra minutes on top of slot price</small></div><div class="r"><b id="mOt">0</b></div></div>
+      <div class="rrow"><div class="l"><b>Snacks sold</b><small>on bills and at the counter</small></div><div class="r"><b id="mSnk">0</b></div></div>
+      <div class="rrow"><div class="l"><b>Counter sales</b><small>snacks without a session</small></div><div class="r"><b id="mCtr">0</b></div></div>
+    </div>
+    <div class="sec">
+      <h4>Recent expenses</h4>
+      <div id="expList"></div>
+    </div>
+  </div>
+
+</div>
+
+<nav id="nav" class="hidden">
+  <button data-tab="consoles" class="sel"><span class="ic1"></span>Stations</button>
+  <button data-tab="queue"><span class="ic2"></span><em id="navQ" style="font-style:normal">Queue</em></button>
+  <button data-tab="games"><span class="ic3"></span>Games</button>
+  <button data-tab="money"><span class="ic4"></span>Money</button>
+</nav>
+
+<div class="sheet" id="startSheet">
+  <div class="panel">
+    <div class="grab"></div>
+    <h2 id="sTitle">Start a session</h2>
+    <p class="sub" id="sSub">Leave the phone blank for a walk-in.</p>
+    <div class="row2">
+      <div>
+        <label for="fPhone">Customer phone</label>
+        <input id="fPhone" type="tel" inputmode="numeric" placeholder="10 digits" maxlength="14">
+      </div>
+      <div>
+        <label for="fName">Customer name</label>
+        <input id="fName" type="text" placeholder="Optional">
+      </div>
+    </div>
+    <div class="hint" id="fHint"></div>
+    <div id="fRewardWrap" class="hidden">
+      <label>Loyalty reward</label>
+      <div class="chips" id="fReward"></div>
+    </div>
+    <label>Players</label>
+    <div class="chips four" id="fPlayers"></div>
+    <label>Duration</label>
+    <div class="chips four" id="fSlot"></div>
+    <label>Price</label>
+    <div class="chips" id="fPrice"></div>
+    <div id="fCustomWrap" class="hidden">
+      <label for="fCustom">Your price</label>
+      <input id="fCustom" type="number" inputmode="numeric" placeholder="Amount for this customer">
+      <div class="hint neutral" id="fCustomHint"></div>
+    </div>
+    <div id="sErr"></div>
+    <div class="actions split">
+      <button class="btn ghost" data-close="1">Cancel</button>
+      <button class="btn" id="sGo">Start session</button>
+    </div>
+    <div class="actions" id="sRepairWrap">
+      <button class="btn ghost" id="sRepair">Mark this station under repair</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="manageSheet">
+  <div class="panel">
+    <div class="grab"></div>
+    <h2 id="mTitle">Session</h2>
+    <p class="sub" id="mSub"></p>
+    <div class="bill" id="mBill"></div>
+    <div class="seg">
+      <button class="mbtn" id="mPause">Pause</button>
+      <button class="mbtn" data-panel="time">Add time</button>
+      <button class="mbtn" data-panel="snacks">Snacks</button>
+      <button class="mbtn" data-panel="move">Move</button>
+    </div>
+    <div class="subpanel hidden" id="pTime">
+      <h6>Add time at this session's rates</h6>
+      <div class="chips four" id="mTimeChips"></div>
+      <div class="actions"><button class="btn" id="mTimeGo">Pick how much time to add</button></div>
+    </div>
+    <div class="subpanel hidden" id="pSnacks">
+      <h6>Tap to add to this bill</h6>
+      <div id="mMenu"></div>
+    </div>
+    <div class="subpanel hidden" id="pMove">
+      <h6>Move to a free station. The timer, snacks and rates stay the same.</h6>
+      <div class="chips" id="mMoveChips"></div>
+      <div class="actions"><button class="btn" id="mMoveGo">Pick a station</button></div>
+    </div>
+    <label>Payment mode</label>
+    <div class="chips four" id="mPay"></div>
+    <div class="row2">
+      <div>
+        <label for="mCustom">Custom price</label>
+        <input id="mCustom" type="number" inputmode="numeric" placeholder="Slot price">
+      </div>
+      <div>
+        <label for="mRemarks">Remarks</label>
+        <input id="mRemarks" type="text" placeholder="Optional">
+      </div>
+    </div>
+    <div class="hint neutral" id="mCustomHint"></div>
+    <div id="mErr"></div>
+    <div class="actions">
+      <button class="btn" id="mGo">Collect and close</button>
+    </div>
+    <div class="actions split">
+      <button class="btn ghost" data-close="1">Back</button>
+      <button class="btn warn" id="mCancel">Cancel, no charge</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="expSheet">
+  <div class="panel">
+    <div class="grab"></div>
+    <h2>Add an expense</h2>
+    <p class="sub">Saved to the Expenses tab with today's date.</p>
+    <div class="row2">
+      <div><label for="xAmt">Amount</label><input id="xAmt" type="number" inputmode="numeric" placeholder="0"></div>
+      <div><label for="xCat">Category</label><select id="xCat"></select></div>
+    </div>
+    <div class="row2">
+      <div><label for="xTo">Paid to</label><input id="xTo" type="text" placeholder="Optional"></div>
+      <div><label for="xNotes">Notes</label><input id="xNotes" type="text" placeholder="Optional"></div>
+    </div>
+    <label>Mode</label>
+    <div class="chips four" id="xMode"></div>
+    <div id="xErr"></div>
+    <div class="actions split">
+      <button class="btn ghost" data-close="1">Cancel</button>
+      <button class="btn" id="xGo">Save expense</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="saleSheet">
+  <div class="panel">
+    <div class="grab"></div>
+    <h2>Counter sale</h2>
+    <p class="sub">For snacks bought without a gaming session.</p>
+    <div class="subpanel" id="cMenu"></div>
+    <div class="bill"><div class="r tot"><span>Collect</span><span id="cTotal">0</span></div></div>
+    <label>Payment mode</label>
+    <div class="chips four" id="cPay"></div>
+    <div id="cErr"></div>
+    <div class="actions split">
+      <button class="btn ghost" data-close="1">Cancel</button>
+      <button class="btn" id="cGo">Save sale</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="waitSheet">
+  <div class="panel">
+    <div class="grab"></div>
+    <h2>Add to waitlist</h2>
+    <p class="sub">They show up on the Queue tab until you seat them.</p>
+    <div class="row2">
+      <div><label for="wName">Name</label><input id="wName" type="text" placeholder="Customer name"></div>
+      <div><label for="wPhone">Phone</label><input id="wPhone" type="tel" inputmode="numeric" placeholder="Optional" maxlength="14"></div>
+    </div>
+    <div class="row2">
+      <div><label for="wPlayers">Players</label><select id="wPlayers"><option>1</option><option>2</option><option>3</option><option>4</option></select></div>
+      <div><label for="wWants">Wants</label><select id="wWants"></select></div>
+    </div>
+    <label for="wNotes">Notes</label>
+    <input id="wNotes" type="text" placeholder="Optional">
+    <div id="wErr"></div>
+    <div class="actions split">
+      <button class="btn ghost" data-close="1">Cancel</button>
+      <button class="btn" id="wGo">Add to waitlist</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="bookSheet">
+  <div class="panel">
+    <div class="grab"></div>
+    <h2>New booking</h2>
+    <p class="sub">The station shows the booking on its card ahead of time.</p>
+    <div class="row2">
+      <div><label for="bDate">Date</label><input id="bDate" type="date"></div>
+      <div><label for="bTime">Time</label><input id="bTime" type="time" step="300"></div>
+    </div>
+    <div class="row2">
+      <div><label for="bStation">Station</label><select id="bStation"></select></div>
+      <div><label for="bPlayers">Players</label><select id="bPlayers"></select></div>
+    </div>
+    <label for="bSlot">Duration</label>
+    <select id="bSlot"></select>
+    <div class="row2">
+      <div><label for="bName">Name</label><input id="bName" type="text" placeholder="Customer name"></div>
+      <div><label for="bPhone">Phone</label><input id="bPhone" type="tel" inputmode="numeric" placeholder="10 digits" maxlength="14"></div>
+    </div>
+    <label for="bNotes">Notes</label>
+    <input id="bNotes" type="text" placeholder="Optional">
+    <div id="bErr"></div>
+    <div class="actions split">
+      <button class="btn ghost" data-close="1">Cancel</button>
+      <button class="btn" id="bGo">Save booking</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="pickSheet">
+  <div class="panel">
+    <div class="grab"></div>
+    <h2 id="pkTitle">Pick a station</h2>
+    <p class="sub" id="pkSub"></p>
+    <label>Free stations</label>
+    <div class="chips" id="pkChips"></div>
+    <div class="actions"><button class="btn ghost" data-close="1">Cancel</button></div>
+  </div>
+</div>
+
+<div class="sheet" id="repairSheet">
+  <div class="panel">
+    <div class="grab"></div>
+    <h2 id="rTitle">Under repair</h2>
+    <p class="sub" id="rSub"></p>
+    <div id="rNoteWrap">
+      <label for="rNote">What is wrong</label>
+      <input id="rNote" type="text" placeholder="For example: controller drift, HDMI loose">
+    </div>
+    <div id="rErr"></div>
+    <div class="actions split">
+      <button class="btn ghost" data-close="1">Back</button>
+      <button class="btn" id="rGo">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="sheet" id="cfgSheet">
+  <div class="panel">
+    <div class="grab"></div>
+    <h2>Settings</h2>
+    <p class="sub">Connection and counter alerts for this device.</p>
+
+    <label>Offline actions</label>
+    <div class="rrow" style="padding-top:4px">
+      <div class="l"><b id="qInfo">Nothing waiting to sync</b><small>Start, pause, resume, close and cancel keep working without internet</small></div>
+      <div class="r"><button class="tiny go" id="btnSyncNow">Sync now</button></div>
+    </div>
+
+    <label for="cfgUrl">Web app address</label>
+    <input id="cfgUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec">
+    <div class="hint neutral">Only change this if the app was opened from a saved file instead of the web app link.</div>
+    <div id="cfgErr"></div>
+
+    <label>Alerts</label>
+    <div class="tog">
+      <div><b>Sound</b><small>Chimes near the end and a long alarm at time up</small></div>
+      <div class="sw" id="swSound" data-pref="sound"><i></i></div>
+    </div>
+    <div class="tog">
+      <div><b>Notifications</b><small>Shows an alert even on another tab</small></div>
+      <div class="sw" id="swNotify" data-pref="notify"><i></i></div>
+    </div>
+    <div class="tog">
+      <div><b>Keep screen on</b><small>Alerts are more reliable when the screen stays awake</small></div>
+      <div class="sw" id="swWake" data-pref="wake"><i></i></div>
+    </div>
+
+    <label for="cfgWarnEvery">Repeat the warning chime</label>
+    <select id="cfgWarnEvery">
+      <option value="15">Every 15 seconds</option>
+      <option value="30">Every 30 seconds</option>
+      <option value="60">Every minute</option>
+      <option value="120">Every 2 minutes</option>
+      <option value="0">Only once</option>
+    </select>
+
+    <label for="cfgVol">Alarm volume</label>
+    <select id="cfgVol">
+      <option value="0.6">Soft</option>
+      <option value="1">Normal</option>
+      <option value="1.6">Loud</option>
+      <option value="2.4">Very loud</option>
+    </select>
+
+    <label>Test the sounds</label>
+    <div class="actions split" style="margin-top:0">
+      <button class="btn ghost" id="btnTestWarn">Warning chime</button>
+      <button class="btn ghost" id="btnTestEnd">Time up alarm</button>
+    </div>
+    <div class="hint neutral" id="cfgTestHint">The time up alarm runs for five seconds.</div>
+
+    <div class="actions split">
+      <button class="btn ghost" data-close="1">Back</button>
+      <button class="btn" id="cfgSave">Save and reconnect</button>
+    </div>
+  </div>
+</div>
+<script>
+var BOOT = document.getElementById('bootData');
+function injected(attr) {
+  var v = BOOT.getAttribute(attr) || '';
+  return v.indexOf('<' + '?') === 0 ? '' : v;
+}
+var SAVED_API = '';
+try { SAVED_API = localStorage.getItem('gg_api') || ''; } catch (e) {}
+var API = injected('data-api') || SAVED_API;
+var BR = null;
+try { BR = JSON.parse(injected('data-brand') || 'null'); } catch (e) { BR = null; }
+var CUR = '\u20B9';
+var TZ = 'Asia/Kolkata';
+
+var S = null, G = [], SUM = null;
+var offset = 0, lastSync = 0, booted = false, busy = false, seq = 0;
+var tab = 'consoles', gFilter = 'all', gQuery = '';
+var toastTimer = null;
+var warnClock = {};
+var OFF = { start: 1, pause: 1, resume: 1, end: 1, cancel: 1 };
+var Q = [];
+var flushing = false;
+try { Q = JSON.parse(localStorage.getItem('gg_q') || '[]') || []; } catch (e) { Q = []; }
+
+var PREFS = { sound: true, notify: false, wake: false, warnEvery: 30, vol: 1.6 };
+try { var _p = JSON.parse(localStorage.getItem('gg_prefs') || '{}'); for (var _k in _p) PREFS[_k] = _p[_k]; } catch (e) {}
+function savePrefs() { try { localStorage.setItem('gg_prefs', JSON.stringify(PREFS)); } catch (e) {} }
+
+var fired = {};
+try { fired = JSON.parse(localStorage.getItem('gg_fired') || '{}') || {}; } catch (e) { fired = {}; }
+function markFired(k) { fired[k] = 1; try { localStorage.setItem('gg_fired', JSON.stringify(fired)); } catch (e) {} }
+
+function $(id) { return document.getElementById(id); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function serverNow() { return Date.now() + offset; }
+function rs(n) { return CUR + Math.round(Number(n) || 0).toLocaleString('en-IN'); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function esc(t) { return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+
+function mmss(ms) {
+  var neg = ms < 0;
+  var t = Math.floor(Math.abs(ms) / 1000);
+  var h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), x = t % 60;
+  var out = h > 0 ? h + ':' + pad(m) + ':' + pad(x) : pad(m) + ':' + pad(x);
+  return (neg ? '+' : '') + out;
+}
+
+function fmtTime(ms) {
+  try { return new Date(ms).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', timeZone: TZ }); }
+  catch (e) { return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); }
+}
+
+function dkey(ms) {
+  try { return new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(ms)); }
+  catch (e) { var d = new Date(ms); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+}
+
+function dayLabel(ms) {
+  var k = dkey(ms), now = serverNow();
+  if (k === dkey(now)) return 'Today';
+  if (k === dkey(now + 86400000)) return 'Tomorrow';
+  try { return new Date(ms).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', timeZone: TZ }); }
+  catch (e) { return k; }
+}
+
+function hexToRgba(hex, a) {
+  var h = hex.replace('#', '');
+  return 'rgba(' + parseInt(h.substr(0, 2), 16) + ',' + parseInt(h.substr(2, 2), 16) + ',' + parseInt(h.substr(4, 2), 16) + ',' + a + ')';
+}
+
+function applyBrand(b) {
+  if (!b) return;
+  BR = b;
+  CUR = b.currency || CUR;
+  TZ = b.tz || TZ;
+  document.title = b.name || 'Cafe';
+  var words = String(b.name || 'Cafe').trim().split(/\s+/);
+  var nm = words.length > 1
+    ? esc(words.slice(0, -1).join(' ')) + ' <i>' + esc(words[words.length - 1]) + '</i>'
+    : '<i>' + esc(words[0]) + '</i>';
+  $('brand').innerHTML = (b.logo ? '<img src="' + esc(b.logo) + '" alt="">' : '') +
+    '<div style="min-width:0"><div class="bn">' + nm + '</div><span class="bt">' + esc(b.tagline || '') + '</span></div>';
+  if (/^#[0-9a-fA-F]{6}$/.test(b.accent || '')) {
+    var root = document.documentElement.style;
+    root.setProperty('--red', b.accent);
+    root.setProperty('--accSoft', hexToRgba(b.accent, 0.13));
+    root.setProperty('--accLine', hexToRgba(b.accent, 0.4));
+  }
+}
+applyBrand(BR);
+
+var audioCtx = null;
+function unlockAudio() {
+  if (audioCtx) return;
+  try {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    audioCtx = new AC();
+    var b = audioCtx.createBuffer(1, 1, 22050);
+    var src = audioCtx.createBufferSource();
+    src.buffer = b; src.connect(audioCtx.destination); src.start(0);
+  } catch (e) {}
+}
+document.addEventListener('touchstart', unlockAudio);
+document.addEventListener('click', unlockAudio);
+
+function beep(pattern) {
+  if (!PREFS.sound) return;
+  unlockAudio();
+  if (!audioCtx) return;
+  if (audioCtx.state === 'suspended') { try { audioCtx.resume(); } catch (e) {} }
+  var master = Number(PREFS.vol);
+  if (!isFinite(master) || master <= 0) master = 1;
+  var t0 = audioCtx.currentTime + 0.02;
+  pattern.forEach(function (p) {
+    var v = Math.min(0.95, Math.max(0.02, (p.v || 0.4) * master));
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.type = p.t || 'sine';
+    o.frequency.value = p.f;
+    g.gain.setValueAtTime(0.0001, t0 + p.at);
+    g.gain.exponentialRampToValueAtTime(v, t0 + p.at + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + p.at + p.d);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(t0 + p.at); o.stop(t0 + p.at + p.d + 0.06);
+  });
+}
+
+var TONE_WARN = [{ f: 880, at: 0, d: 0.16, v: 0.55 }, { f: 1174, at: 0.22, d: 0.16, v: 0.55 }, { f: 880, at: 0.44, d: 0.2, v: 0.55 }];
+var TONE_END = (function () {
+  var a = [];
+  for (var i = 0; i < 10; i++) {
+    var hi = i % 2 === 0;
+    a.push({ f: hi ? 880 : 1174, at: i * 0.5, d: 0.44, v: 0.9, t: 'square' });
+    a.push({ f: hi ? 1760 : 2349, at: i * 0.5, d: 0.44, v: 0.3, t: 'sine' });
+  }
+  return a;
+})();
+var TONE_OT = [{ f: 520, at: 0, d: 0.3, v: 0.7, t: 'square' }, { f: 440, at: 0.34, d: 0.3, v: 0.7, t: 'square' }];
+var TONE_OK = [{ f: 1046, at: 0, d: 0.12, v: 0.35 }, { f: 1318, at: 0.12, d: 0.18, v: 0.35 }];
+var TONE_PAUSE = [{ f: 660, at: 0, d: 0.14, v: 0.4 }, { f: 494, at: 0.16, d: 0.18, v: 0.4 }];
+
+function buzz(pat) { try { if (navigator.vibrate) navigator.vibrate(pat); } catch (e) {} }
+
+function notify(title, body) {
+  if (!PREFS.notify) return;
+  try { if (window.Notification && Notification.permission === 'granted') new Notification(title, { body: body, tag: 'gg-' + Date.now() }); } catch (e) {}
+}
+
+function toast(msg, sub, kind, ms) {
+  var b = $('toast');
+  b.className = 'toast' + (kind ? ' ' + kind : '');
+  b.innerHTML = esc(msg) + (sub ? '<small>' + esc(sub) + '</small>' : '');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(hideToast, ms || 8000);
+}
+function hideToast() { $('toast').className = 'toast hidden'; }
+$('toast').onclick = hideToast;
+
+function errBox(id, msg) { $(id).innerHTML = msg ? '<div class="err">' + esc(msg) + '</div>' : ''; }
+function warnBox(id, msg) { $(id).innerHTML = '<div class="warnbox">' + esc(msg) + '</div>'; }
+
+function call(params, cb) {
+  if (!API) { cb({ ok: false, net: true, error: 'No web app address set. Open settings to add it.' }); return; }
+  var name = 'ggcb' + (++seq) + '_' + Date.now();
+  var s = document.createElement('script');
+  var done = false;
+  function cleanup() {
+    if (done) return false;
+    done = true;
+    try { delete window[name]; } catch (e) { window[name] = undefined; }
+    if (s.parentNode) s.parentNode.removeChild(s);
+    return true;
+  }
+  var timer = setTimeout(function () { if (cleanup()) cb({ ok: false, net: true, error: 'Timed out. Check the connection and try again.' }); }, 20000);
+  window[name] = function (data) { clearTimeout(timer); if (cleanup()) cb(data); };
+  var q = [];
+  for (var k in params) {
+    if (k.charAt(0) === '_') continue;
+    if (params[k] !== undefined && params[k] !== null) q.push(encodeURIComponent(k) + '=' + encodeURIComponent(params[k]));
+  }
+  q.push('callback=' + name);
+  q.push('_=' + Date.now());
+  s.src = API + (API.indexOf('?') > -1 ? '&' : '?') + q.join('&');
+  s.onerror = function () { clearTimeout(timer); if (cleanup()) cb({ ok: false, net: true, error: 'Could not reach the sheet.' }); };
+  document.head.appendChild(s);
+}
+
+function qSave() { try { localStorage.setItem('gg_q', JSON.stringify(Q)); } catch (e) {} paintSync(); }
+function isPendingRef(ref) { return Q.some(function (q) { return q.api === 'start' && q.ref === ref; }); }
+
+function queueOp(params) {
+  Q.push(params);
+  qSave();
+  if (S) { localApply(S, params); render(); }
+}
+
+function act(params, done) {
+  params.op = params.op || uid();
+  var off = !!OFF[params.api];
+  if (off && !params.at) params.at = serverNow();
+  if (!off && params.ref && isPendingRef(params.ref)) { done({ ok: false, error: 'This session is still waiting to sync. Try again once it is back online.' }); return; }
+  if (off && (Q.length || navigator.onLine === false)) { queueOp(params); done({ ok: true, queued: true }); flushQueue(); return; }
+  if (off && (params.api === 'pause' || params.api === 'resume') && S) { localApply(S, params); render(); }
+  call(params, function (res) {
+    if (res && res.net) {
+      if (off) { queueOp(params); done({ ok: true, queued: true }); return; }
+      done({ ok: false, error: 'No connection. This needs the internet.' });
+      return;
+    }
+    done(res);
+  });
+}
+
+function flushQueue() {
+  if (flushing || !Q.length) return;
+  flushing = true;
+  paintSync();
+  var op = Q[0];
+  call(op, function (res) {
+    flushing = false;
+    if (res && res.net) { paintSync(); return; }
+    Q.shift();
+    qSave();
+    if (!res || !res.ok) toast('One offline action could not sync', (res && res.error) || 'Check the sheet', 'warn', 9000);
+    if (Q.length) flushQueue();
+    else refresh();
+  });
+}
+
+function stationOf(st, name) {
+  for (var i = 0; i < st.stations.length; i++) if (st.stations[i].station === name) return st.stations[i];
+  return null;
+}
+
+function sessOf(st, key) {
+  if (!st || !key) return null;
+  for (var i = 0; i < st.stations.length; i++) {
+    var x = st.stations[i];
+    if (x.s && (x.s.ref === key || x.s.id === key)) return x;
+  }
+  return null;
+}
+
+function skey(s) { return s.ref || s.id; }
+
+function slotsFor(station, players) {
+  return ((S && S.pricing && S.pricing[station]) || []).map(function (s) {
+    return { name: s.name, minutes: s.minutes, price: s.p[players - 1] || 0, cap: s.cap };
+  });
+}
+
+function priceOf(st, station, slot, players) {
+  var list = (st.pricing && st.pricing[station]) || [];
+  var key = String(slot || '').toLowerCase();
+  for (var i = 0; i < list.length; i++) {
+    if (list[i].name.toLowerCase() === key) {
+      var p = list[i].p[players - 1];
+      return p > 0 ? { name: list[i].name, minutes: list[i].minutes, price: p, cap: list[i].cap } : null;
+    }
+  }
+  return null;
+}
+
+function calcBill(s, atMs, customOverride) {
+  var cfg = (S && S.cfg) || { grace: 5, round: 10 };
+  var custom = (customOverride !== null && customOverride !== undefined) ? Number(customOverride) || 0 : (s.custom || 0);
+  var base = custom > 0 ? custom : s.standard;
+  var gaming = base + (s.extendCharge || 0);
+  var pausedMin = (s.pausedMin || 0) + (s.pausedAtMs ? Math.max(0, (atMs - s.pausedAtMs) / 60000) : 0);
+  var played = Math.max(0, Math.round((atMs - s.startMs) / 60000 - pausedMin));
+  var booked = s.booked;
+  var rate = booked > 0 ? gaming / booked : 0;
+  var over = played - booked;
+  var extras = 0;
+  if (booked > 0 && over > cfg.grace) {
+    var raw = Math.ceil((over * rate) / cfg.round) * cfg.round;
+    extras = (s.otCap > 0 && raw > s.otCap) ? s.otCap : raw;
+  }
+  var reward = s.rewardMin > 0 ? Math.min(gaming, Math.round(rate * s.rewardMin)) : 0;
+  return {
+    played: played, booked: booked, over: over, base: base, standard: s.standard, custom: custom,
+    gaming: gaming, extras: extras, reward: reward, snacks: s.snacks || 0, pausedMin: pausedMin,
+    total: Math.max(0, gaming + extras + (s.snacks || 0) - reward)
+  };
+}
+
+function localApply(st, op) {
+  if (!st) return;
+  var at = Number(op.at) || serverNow();
+  var x;
+  if (op.api === 'start') {
+    x = stationOf(st, op.station);
+    if (!x || x.busy || sessOf(st, op.ref)) return;
+    var pl = Number(op.players) || 1;
+    var pr = priceOf(st, op.station, op.slot, pl);
+    if (!pr) return;
+    var custom = Number(op.custom) || 0;
+    x.busy = true;
+    x.s = {
+      id: '', ref: op.ref, station: op.station, rateStation: op.station, customer: op.name || 'Walk-in',
+      phone: op.phone || '', slot: pr.name, players: pl, startMs: at, booked: pr.minutes, standard: pr.price,
+      custom: custom, extendMin: 0, extendCharge: 0, otCap: pr.cap || 0, pausedMin: 0, pausedAtMs: 0,
+      pauseCount: 0, rewardMin: Number(op._rewardMin) || 0, snacks: 0, items: [], pending: true
+    };
+    st.today.sessions++;
+    st.today.open += custom > 0 ? custom : pr.price;
+    if (op.booking) st.bookings = st.bookings.filter(function (b) { return b.id !== op.booking; });
+    if (op.wait) st.waitlist = st.waitlist.filter(function (w) { return w.id !== op.wait; });
+    return;
+  }
+  x = sessOf(st, op.ref || op.id);
+  if (!x) return;
+  var s = x.s;
+  if (op.api === 'pause') {
+    if (s.pausedAtMs) return;
+    s.pausedAtMs = at;
+    s.pauseCount++;
+  } else if (op.api === 'resume') {
+    if (!s.pausedAtMs) return;
+    s.pausedMin += Math.max(0, (at - s.pausedAtMs) / 60000);
+    s.pausedAtMs = 0;
+  } else if (op.api === 'end') {
+    var b = calcBill(s, at, (op.custom !== undefined && op.custom !== '') ? op.custom : null);
+    st.today.revenue += b.total;
+    st.today.overtime += b.extras;
+    st.today.open = Math.max(0, st.today.open - (s.standard + s.extendCharge));
+    st.recent.unshift({ id: s.id, station: x.station, customer: s.customer, total: b.total, extras: b.extras, snacks: b.snacks, played: b.played, pay: op.pay, today: true });
+    st.recent = st.recent.slice(0, 10);
+    x.busy = false;
+    x.s = null;
+  } else if (op.api === 'cancel') {
+    st.today.sessions = Math.max(0, st.today.sessions - 1);
+    st.today.open = Math.max(0, st.today.open - (s.standard + s.extendCharge));
+    x.busy = false;
+    x.s = null;
+  }
+}
+
+function apply(state) {
+  S = state;
+  offset = state.now - Date.now();
+  lastSync = Date.now();
+  if (state.brand) applyBrand(state.brand);
+  if (Q.length) Q.forEach(function (op) { localApply(S, op); });
+  if (!booted) {
+    booted = true;
+    $('boot').classList.add('hidden');
+    $('app').classList.remove('hidden');
+    $('nav').classList.remove('hidden');
+    loadGames();
+    loadSummary();
+  }
+  render();
+}
+
+function refresh() {
+  if (Q.length) { flushQueue(); return; }
+  call({ api: 'state' }, function (res) {
+    if (res && res.ok && res.state) { apply(res.state); return; }
+    if (!booted) {
+      $('boot').innerHTML =
+        '<div class="bootmsg"><div class="err">' + esc((res && res.error) || 'Could not connect to the sheet.') + '</div>' +
+        '<p>Open settings with the gear above and check the web app address.</p></div>';
+    }
+    paintSync();
+  });
+}
+
+function loadGames() {
+  call({ api: 'games' }, function (res) {
+    if (res && res.ok) { G = res.games || []; buildFilters(); renderGames(); }
+  });
+}
+
+function loadSummary() {
+  call({ api: 'summary' }, function (res) {
+    if (res && res.ok) { SUM = res; renderMoney(); }
+  });
+}
+
+function paintSync() {
+  var age = lastSync ? (Date.now() - lastSync) / 1000 : 999;
+  var d = $('dot');
+  var txt = !lastSync ? 'offline' : age < 20 ? 'live' : Math.round(age) + 's ago';
+  if (Q.length) txt = (flushing ? 'syncing ' : 'offline, ') + Q.length + ' pending';
+  $('syncTxt').textContent = txt;
+  d.className = 'dot' + ((Q.length && !flushing) || age > 70 ? ' dead' : (age > 30 || Q.length) ? ' stale' : '');
+  var qi = $('qInfo');
+  if (qi) qi.textContent = Q.length ? plural(Q.length, 'action') + ' waiting to sync' : 'Nothing waiting to sync';
+}
+
+function nextBooking(station) {
+  if (!S) return null;
+  var now = serverNow();
+  var lateMs = (S.cfg.noShow || 15) * 60000 + 3600000;
+  var ahead = (S.cfg.bookAhead || 180) * 60000;
+  var list = S.bookings.filter(function (b) {
+    return b.station === station && b.startsMs >= now - lateMs && b.startsMs <= now + ahead;
+  });
+  return list[0] || null;
+}
+
+function freeStations(wants) {
+  if (!S) return [];
+  return S.stations.filter(function (x) {
+    return !x.busy && !x.repair && (!wants || wants === 'Any' || x.type === wants);
+  });
+}
+
+function render() {
+  if (!S) return;
+  var free = 0;
+  var g = $('grid');
+  g.innerHTML = '';
+  if (!S.stations.length) {
+    g.innerHTML = '<div class="empty">No stations yet. Add them on the Stations tab of the sheet, tick Active, then set prices on the Pricing tab.</div>';
+  }
+  S.stations.forEach(function (x) {
+    var d = document.createElement('div');
+    var typeTag = x.type ? '<small>' + esc(x.type) + '</small>' : '';
+    if (x.repair) {
+      d.className = 'st repair';
+      d.innerHTML =
+        '<div class="rail"></div>' +
+        '<div class="top"><h3>' + esc(x.station) + typeTag + '</h3><span class="state repair">Under repair</span></div>' +
+        '<div class="idle">' + esc(x.note || 'Not available right now') + '</div>' +
+        '<div class="meta" style="margin-top:8px">Tap when it is fixed</div>';
+      d.onclick = function () { openRepair(x.station); };
+    } else if (x.busy && x.s) {
+      var s = x.s;
+      var key = skey(s);
+      d.className = 'st busy' + (s.pausedAtMs ? ' paused' : '');
+      d.setAttribute('data-key', key);
+      var slotTxt = esc(s.slot) + (s.extendMin > 0 ? ' +' + s.extendMin + ' min' : '');
+      d.innerHTML =
+        '<div class="rail"></div>' +
+        '<div class="top"><h3>' + esc(x.station) + typeTag + '</h3><div>' + (s.pending ? '<span class="state sync">Syncing</span>' : '') + '<span class="state busy">Playing</span></div></div>' +
+        '<div class="who">' + esc(s.customer) + '</div>' +
+        '<div class="meta"><em>' + slotTxt + '</em><i></i><em>' + plural(s.players, 'player') + '</em><i></i><b>' + rs((s.custom > 0 ? s.custom : s.standard) + s.extendCharge) + '</b>' +
+        (s.snacks > 0 ? '<i></i><em>snacks ' + rs(s.snacks) + '</em>' : '') +
+        (s.rateStation && s.rateStation !== x.station ? '<i></i><em>' + esc(s.rateStation) + ' rates</em>' : '') + '</div>' +
+        '<div class="clockrow"><div class="clock">--:--</div><div class="clocklbl">left</div></div>' +
+        '<div class="track"><div class="fill" style="width:0%"></div></div>' +
+        '<div class="acts"><button class="mbtn" data-act="pause">' + (s.pausedAtMs ? 'Resume' : 'Pause') + '</button><button class="mbtn primary" data-act="manage">Bill and more</button></div>';
+      d.onclick = function () { openManage(key); };
+      d.querySelector('[data-act="pause"]').onclick = function (ev) { ev.stopPropagation(); togglePause(key); };
+      d.querySelector('[data-act="manage"]').onclick = function (ev) { ev.stopPropagation(); openManage(key); };
+    } else {
+      free++;
+      d.className = 'st free';
+      var bk = nextBooking(x.station);
+      var bkHtml = '';
+      if (bk) {
+        var late = serverNow() > bk.startsMs + (S.cfg.noShow || 15) * 60000;
+        bkHtml = '<div class="bk"><span><b>' + (late ? 'Late: ' : 'Booked ') + fmtTime(bk.startsMs) + '</b> ' + esc(bk.name || bk.phone || 'Guest') + ', ' + esc(bk.slot) + '</span><button class="tiny go" data-act="book">Start</button></div>';
+      }
+      d.innerHTML =
+        '<div class="rail"></div>' +
+        '<div class="top"><h3>' + esc(x.station) + typeTag + '</h3><span class="state free">Free</span></div>' +
+        '<div class="idle"><span class="plus">+</span>Tap to start a session</div>' + bkHtml;
+      d.onclick = function () { openStart(x.station); };
+      if (bk) {
+        d.querySelector('[data-act="book"]').onclick = function (ev) {
+          ev.stopPropagation();
+          openStart(x.station, { booking: bk.id, phone: bk.phone, name: bk.name, players: bk.players, slot: bk.slot });
+        };
+      }
+    }
+    g.appendChild(d);
+  });
+
+  $('kSess').textContent = S.today.sessions;
+  $('kRev').textContent = rs(S.today.revenue);
+  $('kOpen').textContent = rs(S.today.open || 0) + ' running';
+  $('kFree').textContent = free;
+  $('kFreeNote').textContent = free === 1 ? 'station' : 'stations';
+
+  var wb = $('waitBanner');
+  if (S.waitlist.length) {
+    var w0 = S.waitlist[0];
+    var mins = Math.max(0, Math.round((serverNow() - w0.addedMs) / 60000));
+    wb.innerHTML = '<b>' + plural(S.waitlist.length, 'group') + ' waiting</b><small>Next: ' + esc(w0.name || w0.phone || 'Guest') + ', ' + plural(w0.players, 'player') + ', waiting ' + mins + ' min' + (free ? '. Tap to seat them.' : '') + '</small>';
+    wb.classList.remove('hidden');
+    wb.onclick = function () { switchTab('queue'); };
+  } else {
+    wb.classList.add('hidden');
+  }
+  $('navQ').textContent = 'Queue' + ((S.waitlist.length + S.bookings.length) ? ' ' + (S.waitlist.length + S.bookings.length) : '');
+
+  var r = $('recent');
+  r.innerHTML = S.recent.length ? '' : '<div class="empty">No sessions closed yet. Tap a free station to start one.</div>';
+  S.recent.forEach(function (it) {
+    var e = document.createElement('div');
+    e.className = 'rrow';
+    e.innerHTML =
+      '<div class="l"><b>' + esc(it.customer) + '</b><small>' + esc(it.station) + ', ' + it.played + ' min' +
+      (it.extras > 0 ? ', overtime ' + rs(it.extras) : '') + (it.snacks > 0 ? ', snacks ' + rs(it.snacks) : '') + (it.today ? '' : ', earlier') + '</small></div>' +
+      '<div class="r"><b>' + rs(it.total) + '</b><small>' + esc(it.pay) + '</small></div>';
+    r.appendChild(e);
+  });
+
+  renderQueue();
+  renderMoney();
+  paintManage();
+  tick();
+}
+
+function tinyBtn(text, kind, fn, arm) {
+  var b = document.createElement('button');
+  b.className = 'tiny ' + (kind || '');
+  b.textContent = text;
+  var armed = false, t = null;
+  b.onclick = function (ev) {
+    ev.stopPropagation();
+    if (arm && !armed) {
+      armed = true;
+      b.className = 'tiny armed';
+      b.textContent = 'Tap again';
+      t = setTimeout(function () { armed = false; b.className = 'tiny ' + (kind || ''); b.textContent = text; }, 3000);
+      return;
+    }
+    clearTimeout(t);
+    fn();
+  };
+  return b;
+}
+
+function renderQueue() {
+  if (!S) return;
+  var now = serverNow();
+  var wl = $('waitList');
+  wl.innerHTML = '';
+  if (!S.waitlist.length) wl.innerHTML = '<div class="empty">Nobody is waiting. Add a group when every station is busy.</div>';
+  S.waitlist.forEach(function (w) {
+    var e = document.createElement('div');
+    e.className = 'qrow';
+    e.innerHTML = '<div class="l"><b>' + esc(w.name || w.phone || 'Guest') + '</b><small>' +
+      plural(w.players, 'player') + ', wants ' + esc(w.wants || 'Any') + ', waiting ' + Math.max(0, Math.round((now - w.addedMs) / 60000)) + ' min' +
+      (w.phone && w.name ? ', ' + esc(w.phone) : '') + (w.notes ? ', ' + esc(w.notes) : '') + '</small></div><div class="rowacts"></div>';
+    var acts = e.querySelector('.rowacts');
+    acts.appendChild(tinyBtn('Seat', 'go', function () { seatWait(w); }));
+    acts.appendChild(tinyBtn('Remove', 'bad', function () { setWait(w.id, 'Left'); }, true));
+    wl.appendChild(e);
+  });
+
+  var bl = $('bookList');
+  bl.innerHTML = '';
+  if (!S.bookings.length) bl.innerHTML = '<div class="empty">No bookings in the next 7 days.</div>';
+  var lastDay = '';
+  S.bookings.forEach(function (b) {
+    var lbl = dayLabel(b.startsMs);
+    if (lbl !== lastDay) {
+      var h = document.createElement('div');
+      h.className = 'day';
+      h.textContent = lbl;
+      bl.appendChild(h);
+      lastDay = lbl;
+    }
+    var late = now > b.startsMs + (S.cfg.noShow || 15) * 60000;
+    var e = document.createElement('div');
+    e.className = 'qrow';
+    e.innerHTML = '<div class="l"><b><span class="tm">' + fmtTime(b.startsMs) + '</span>' + esc(b.name || b.phone || 'Guest') + '</b><small>' +
+      esc(b.station) + ', ' + esc(b.slot) + ', ' + plural(b.players, 'player') + (b.phone && b.name ? ', ' + esc(b.phone) : '') +
+      (b.notes ? ', ' + esc(b.notes) : '') + (late ? ' <span class="late">late</span>' : '') + '</small></div><div class="rowacts"></div>';
+    var acts = e.querySelector('.rowacts');
+    var x = stationOf(S, b.station);
+    if (x && !x.busy && !x.repair && b.startsMs - now < 3600000) {
+      acts.appendChild(tinyBtn('Start now', 'go', function () {
+        openStart(b.station, { booking: b.id, phone: b.phone, name: b.name, players: b.players, slot: b.slot });
+      }));
+    }
+    if (late) acts.appendChild(tinyBtn('No-show', 'bad', function () { setBook(b.id, 'No-show'); }, true));
+    acts.appendChild(tinyBtn('Cancel booking', 'bad', function () { setBook(b.id, 'Cancelled'); }, true));
+    bl.appendChild(e);
+  });
+}
+
+function seatWait(w) {
+  var list = freeStations(w.wants);
+  var note = '';
+  if (!list.length && w.wants && w.wants !== 'Any') {
+    list = freeStations('Any');
+    if (list.length) note = 'No free ' + w.wants + '. Showing every free station.';
+  }
+  if (!list.length) { toast('No station is free', 'Seat them when a station opens up', 'warn', 4000); return; }
+  openPicker('Seat ' + (w.name || w.phone || 'guest'), note || plural(w.players, 'player') + ', wants ' + (w.wants || 'Any'), list, function (st) {
+    openStart(st, { phone: w.phone, name: w.name, players: w.players, wait: w.id });
+  });
+}
+
+function setWait(id, status) {
+  act({ api: 'waitSet', id: id, status: status }, function (res) {
+    if (!res || !res.ok) { toast('Could not update the waitlist', res && res.error, 'warn'); return; }
+    if (res.state) apply(res.state);
+  });
+}
+
+function setBook(id, status) {
+  act({ api: 'bookSet', id: id, status: status }, function (res) {
+    if (!res || !res.ok) { toast('Could not update the booking', res && res.error, 'warn'); return; }
+    if (res.state) apply(res.state);
+    toast(status === 'No-show' ? 'Marked as no-show' : 'Booking cancelled', '', '', 3000);
+  });
+}
+
+function renderMoney() {
+  if (!S) return;
+  var exp = SUM ? SUM.todayExpenses : 0;
+  $('mRev').textContent = rs(S.today.revenue);
+  $('mExp').textContent = rs(exp);
+  $('mNet').textContent = rs(S.today.revenue - exp);
+  $('mOt').textContent = rs(S.today.overtime);
+  $('mSnk').textContent = rs(S.today.snacks || 0);
+  $('mCtr').textContent = rs(S.today.counter || 0);
+  var el = $('expList');
+  if (!SUM || !SUM.recentExpenses.length) { el.innerHTML = '<div class="empty">No expenses logged yet.</div>'; return; }
+  el.innerHTML = '';
+  SUM.recentExpenses.forEach(function (x) {
+    var e = document.createElement('div');
+    e.className = 'rrow';
+    e.innerHTML =
+      '<div class="l"><b>' + esc(x.cat) + '</b>' + (x.paidTo ? '<small>' + esc(x.paidTo) + '</small>' : '') + '</div>' +
+      '<div class="r"><b>' + rs(x.amount) + '</b><small>' + esc(x.mode) + (x.today ? '' : ', earlier') + '</small></div>';
+    el.appendChild(e);
+  });
+}
+
+function stationNames() {
+  return (S && S.stations) ? S.stations.map(function (s) { return s.station; }) : [];
+}
+
+function buildFilters() {
+  var host = $('gFilters');
+  var names = stationNames();
+  var opts = [{ v: 'all', t: 'All ' + G.length }];
+  names.forEach(function (s) {
+    var n = G.filter(function (g) { return g.on.indexOf(s) > -1; }).length;
+    opts.push({ v: s, t: s + ' ' + n });
+  });
+  opts.push({ v: '__none', t: 'Not installed' });
+  host.innerHTML = '';
+  opts.forEach(function (o) {
+    var b = document.createElement('div');
+    b.className = 'gf' + (o.v === gFilter ? ' sel' : '');
+    b.textContent = o.t;
+    b.onclick = function () { gFilter = o.v; buildFilters(); renderGames(); };
+    host.appendChild(b);
+  });
+}
+
+function renderGames() {
+  var host = $('glist');
+  var names = stationNames();
+  var list = G.filter(function (g) {
+    if (gQuery && g.title.toLowerCase().indexOf(gQuery) === -1) return false;
+    if (gFilter === 'all') return true;
+    if (gFilter === '__none') return !g.on.length;
+    return g.on.indexOf(gFilter) > -1;
+  });
+  if (!list.length) {
+    host.innerHTML = '<div class="empty">No games here yet. Add titles on the Games tab of the sheet and tick the stations they are installed on.</div>';
+    return;
+  }
+  host.innerHTML = '';
+  list.forEach(function (g) {
+    var d = document.createElement('div');
+    d.className = 'g';
+    d.innerHTML = '<h5>' + esc(g.title) + '</h5><div class="cons">' + names.map(function (n) {
+      return '<span class="cn' + (g.on.indexOf(n) > -1 ? ' on' : '') + '">' + esc(n) + '</span>';
+    }).join('') + '</div>';
+    host.appendChild(d);
+  });
+}
+
+function tick() {
+  paintSync();
+  if (!S) return;
+  var now = serverNow();
+  var warnMs = (S.cfg.warnMin || 10) * 60000;
+  var live = {};
+  S.stations.forEach(function (x) {
+    if (!x.busy || !x.s) return;
+    var s = x.s;
+    var key = skey(s);
+    live[key] = 1;
+    var paused = !!s.pausedAtMs;
+    var endsMs = s.startMs + (s.booked + (s.pausedMin || 0)) * 60000;
+    var ref = paused ? s.pausedAtMs : now;
+    var left = endsMs - ref;
+    var c = document.querySelector('.st[data-key="' + key + '"]');
+    if (c) {
+      var cl = c.querySelector('.clock');
+      var lb = c.querySelector('.clocklbl');
+      var fl = c.querySelector('.fill');
+      var tg = c.querySelector('.state.busy, .state.over, .state.paused');
+      cl.textContent = mmss(left);
+      if (paused) {
+        cl.className = 'clock paused';
+        lb.textContent = 'paused ' + mmss(now - s.pausedAtMs);
+        c.className = 'st paused';
+        if (tg) { tg.className = 'state paused'; tg.textContent = 'Paused'; }
+      } else {
+        cl.className = 'clock' + (left < 0 ? ' over' : (left <= warnMs ? ' warn' : ''));
+        lb.textContent = left < 0 ? 'over' : 'left';
+        c.className = left < 0 ? 'st over' : (left <= warnMs ? 'st busy warn' : 'st busy');
+        if (tg) {
+          tg.className = left < 0 ? 'state over' : 'state busy';
+          tg.textContent = left < 0 ? 'Overtime' : 'Playing';
+        }
+      }
+      var total = s.booked * 60000;
+      var used = (ref - s.startMs) - (s.pausedMin || 0) * 60000;
+      fl.style.width = (total > 0 ? Math.min(100, Math.max(0, used / total * 100)) : 0) + '%';
+      fl.className = 'fill' + (paused ? ' paused' : (left < 0 ? ' over' : ''));
+    }
+    if (paused) return;
+
+    var wk = 'w' + key + '_' + s.booked;
+    var ek = 'e' + key + '_' + s.booked;
+    if (left > warnMs) delete warnClock[key];
+    if (left > 0 && left <= warnMs) {
+      var firstWarn = !fired[wk];
+      var iv = Number(PREFS.warnEvery || 0) * 1000;
+      var repeatDue = iv > 0 && (!warnClock[key] || now - warnClock[key] >= iv);
+      if (firstWarn || repeatDue) {
+        warnClock[key] = now;
+        beep(TONE_WARN);
+        buzz([200, 120, 200]);
+        if (firstWarn) {
+          markFired(wk);
+          var lm = Math.ceil(left / 60000);
+          notify(x.station + ' has ' + lm + ' minutes left', s.customer);
+          toast(x.station + ' has ' + lm + ' minutes left', s.customer, 'warn');
+        }
+      }
+    }
+    if (left <= 0 && !fired[ek]) {
+      markFired(ek);
+      delete warnClock[key];
+      beep(TONE_END);
+      buzz([400, 150, 400, 150, 400, 150, 400, 150, 400]);
+      notify(x.station + ' time is up', s.customer + ' has finished the booked time');
+      toast(x.station + ' time is up', 'Tap the station to collect from ' + s.customer, 'end', 30000);
+    }
+    if (left < 0) {
+      var otMin = Math.floor(-left / 60000);
+      var ok = 'o' + key + '_' + s.booked + '_' + otMin;
+      if (otMin > 0 && otMin % 5 === 0 && !fired[ok]) {
+        markFired(ok);
+        beep(TONE_OT);
+        buzz(220);
+      }
+    }
+  });
+
+  for (var wk2 in warnClock) if (!live[wk2]) delete warnClock[wk2];
+
+  var keys = Object.keys(fired);
+  if (keys.length > 80) {
+    var kept = {};
+    keys.forEach(function (k) { if (live[k.substring(1).split('_')[0]]) kept[k] = 1; });
+    fired = kept;
+    try { localStorage.setItem('gg_fired', JSON.stringify(fired)); } catch (e) {}
+  }
+
+  if ($('manageSheet').classList.contains('on')) paintManageBill();
+}
+
+function switchTab(t) {
+  tab = t;
+  var btns = document.querySelectorAll('#nav button');
+  for (var j = 0; j < btns.length; j++) btns[j].className = btns[j].getAttribute('data-tab') === t ? 'sel' : '';
+  ['consoles', 'queue', 'games', 'money'].forEach(function (k) { $('tab-' + k).classList.toggle('hidden', k !== t); });
+  if (t === 'games') loadGames();
+  if (t === 'money') loadSummary();
+  window.scrollTo(0, 0);
+}
+
+var navBtns = document.querySelectorAll('#nav button');
+for (var ni = 0; ni < navBtns.length; ni++) {
+  navBtns[ni].onclick = (function (b) { return function () { switchTab(b.getAttribute('data-tab')); }; })(navBtns[ni]);
+}
+
+$('gSearch').addEventListener('input', function () {
+  gQuery = this.value.trim().toLowerCase();
+  renderGames();
+});
+
+function closeSheets() {
+  var all = document.querySelectorAll('.sheet');
+  for (var i = 0; i < all.length; i++) all[i].classList.remove('on');
+}
+
+function openSheet(id) {
+  closeSheets();
+  $(id).classList.add('on');
+  var p = $(id).querySelector('.panel');
+  if (p) p.scrollTop = 0;
+}
+
+var closers = document.querySelectorAll('[data-close]');
+for (var ci = 0; ci < closers.length; ci++) closers[ci].onclick = closeSheets;
+
+var sheets = document.querySelectorAll('.sheet');
+for (var hi = 0; hi < sheets.length; hi++) {
+  sheets[hi].onclick = (function (node) { return function (ev) { if (ev.target === node) closeSheets(); }; })(sheets[hi]);
+}
+
+function chip(host, items, onPick, initial) {
+  host.innerHTML = '';
+  items.forEach(function (it) {
+    var b = document.createElement('div');
+    b.className = 'chip' + (it.off ? ' off' : (it.value === initial ? ' sel' : ''));
+    b.innerHTML = it.html;
+    if (!it.off) {
+      b.setAttribute('tabindex', '0');
+      b.onclick = function () {
+        var kids = host.children;
+        for (var i = 0; i < kids.length; i++) if (kids[i].className.indexOf('off') === -1) kids[i].className = 'chip';
+        b.className = 'chip sel';
+        onPick(it.value);
+      };
+    }
+    host.appendChild(b);
+  });
+}
+
+var sel = {};
+
+function openStart(station, pre) {
+  var x = stationOf(S, station);
+  if (!x) return;
+  if (x.busy) { toast(station + ' is busy', 'Pick another station', 'warn', 3000); return; }
+  if (x.repair) { openRepair(station); return; }
+  pre = pre || {};
+  var players = Math.min(x.max, Number(pre.players) || 1);
+  sel = {
+    station: station, max: x.max, slot: pre.slot || '', players: players, priceMode: 'std', custom: 0,
+    reward: false, rewardMin: 0, rewardLeft: 0, booking: pre.booking || '', wait: pre.wait || '', clashOk: false
+  };
+  if (!slotsFor(station, players).some(function (s) { return s.price > 0; })) {
+    for (var i = 1; i <= x.max; i++) if (slotsFor(station, i).some(function (s) { return s.price > 0; })) { sel.players = i; break; }
+  }
+  if (sel.slot && !priceOf(S, station, sel.slot, sel.players)) sel.slot = '';
+  $('sTitle').textContent = 'Start on ' + station;
+  $('sSub').textContent = sel.booking ? 'Starting a booking. Check the details, then start.' : sel.wait ? 'Seating from the waitlist.' : 'Leave the phone blank for a walk-in.';
+  $('fPhone').value = pre.phone || '';
+  $('fName').value = pre.name || '';
+  $('fHint').textContent = '';
+  $('fHint').className = 'hint';
+  $('fRewardWrap').classList.add('hidden');
+  $('fCustom').value = '';
+  $('fCustomWrap').classList.add('hidden');
+  errBox('sErr', '');
+  $('sRepairWrap').classList.toggle('hidden', !!(sel.booking || sel.wait));
+  playerChips();
+  slotChips();
+  openSheet('startSheet');
+  if (pre.phone) lookupPhone(pre.phone);
+}
+
+function playerChips() {
+  var items = [];
+  for (var i = 1; i <= sel.max; i++) {
+    var any = slotsFor(sel.station, i).some(function (s) { return s.price > 0; });
+    items.push({ value: i, html: '<b>' + plural(i, 'player') + '</b>', off: !any });
+  }
+  chip($('fPlayers'), items, function (v) {
+    sel.players = v;
+    if (!priceOf(S, sel.station, sel.slot, v)) sel.slot = '';
+    sel.clashOk = false;
+    slotChips();
+  }, sel.players);
+}
+
+function slotChips() {
+  var list = slotsFor(sel.station, sel.players);
+  if (!list.length) {
+    $('fSlot').innerHTML = '<div class="empty" style="grid-column:1/-1">No prices set for ' + esc(sel.station) + '. Add rows for it on the Pricing tab of the sheet.</div>';
+  } else {
+    chip($('fSlot'), list.map(function (s) {
+      return { value: s.name, html: '<b>' + esc(s.name) + '</b><small>' + (s.price > 0 ? rs(s.price) : 'not offered') + '</small>', off: !(s.price > 0) };
+    }), function (v) { sel.slot = v; sel.clashOk = false; errBox('sErr', ''); priceChips(); }, sel.slot);
+  }
+  priceChips();
+}
+
+function standardPrice() {
+  var p = priceOf(S, sel.station, sel.slot, sel.players);
+  return p ? p.price : 0;
+}
+
+function priceChips() {
+  var std = standardPrice();
+  chip($('fPrice'), [
+    { value: 'std', html: '<b>Standard</b><small>' + (sel.slot ? rs(std) : 'pick a duration') + '</small>' },
+    { value: 'cus', html: '<b>Custom rate</b><small>set your own</small>' }
+  ], function (v) {
+    sel.priceMode = v;
+    $('fCustomWrap').classList.toggle('hidden', v !== 'cus');
+    if (v === 'cus') {
+      $('fCustomHint').textContent = sel.slot ? 'Standard is ' + rs(std) + '. Overtime is worked out from your price.' : 'Pick a duration first.';
+      $('fCustom').focus();
+    } else {
+      sel.custom = 0;
+      $('fCustom').value = '';
+    }
+  }, sel.priceMode);
+}
+
+function rewardChips() {
+  var wrap = $('fRewardWrap');
+  if (!(sel.rewardLeft > 0 && sel.rewardMin > 0)) { wrap.classList.add('hidden'); sel.reward = false; return; }
+  wrap.classList.remove('hidden');
+  chip($('fReward'), [
+    { value: false, html: '<b>Pay normally</b><small>save the reward</small>' },
+    { value: true, html: '<b>Use ' + sel.rewardMin + ' free min</b><small>' + sel.rewardLeft + ' available</small>' }
+  ], function (v) { sel.reward = v; }, sel.reward);
+}
+
+function lookupPhone(v) {
+  var p = String(v || '').replace(/[^0-9]/g, '');
+  if (p.length > 10 && p.indexOf('91') === 0) p = p.substring(2);
+  var h = $('fHint');
+  sel.rewardLeft = 0;
+  rewardChips();
+  if (p.length < 10) { h.textContent = ''; return; }
+  h.className = 'hint neutral';
+  h.textContent = 'Checking the customer list';
+  call({ api: 'lookup', phone: v }, function (res) {
+    if (res && res.net) { h.textContent = 'Offline. Customer details will be linked when it syncs.'; return; }
+    if (res && res.name) {
+      if (!$('fName').value) $('fName').value = res.name;
+      h.className = 'hint';
+      h.textContent = res.name + ', ' + plural(res.visits || 0, 'visit') + ', ' + (res.tier || 'Bronze');
+    } else if (res && res.ok) {
+      h.className = 'hint neutral';
+      h.textContent = 'New customer';
+    } else {
+      h.textContent = '';
+    }
+    sel.rewardLeft = (res && res.rewardsLeft) || 0;
+    sel.rewardMin = (res && res.rewardMin) || 0;
+    rewardChips();
+  });
+}
+
+$('fPhone').addEventListener('blur', function () { lookupPhone(this.value); });
+$('fCustom').addEventListener('input', function () { sel.custom = Number(this.value) || 0; });
+
+function findClash(station, minutes, exceptId) {
+  if (!S) return null;
+  var now = serverNow();
+  var grace = (S.cfg.noShow || 15) * 60000;
+  return S.bookings.filter(function (b) {
+    return b.station === station && b.id !== exceptId && b.startsMs < now + minutes * 60000 && b.startsMs > now - grace;
+  })[0] || null;
+}
+
+$('sGo').onclick = function () {
+  if (busy) return;
+  errBox('sErr', '');
+  if (!sel.slot) { errBox('sErr', 'Pick a duration to start.'); return; }
+  if (sel.priceMode === 'cus' && !(sel.custom > 0)) { errBox('sErr', 'Enter the custom price, or switch back to Standard.'); return; }
+  var pr = priceOf(S, sel.station, sel.slot, sel.players);
+  if (!pr) { errBox('sErr', 'That duration has no price for ' + plural(sel.players, 'player') + '.'); return; }
+  var clash = findClash(sel.station, pr.minutes, sel.booking);
+  if (clash && !sel.clashOk) {
+    sel.clashOk = true;
+    warnBox('sErr', (clash.name || 'A customer') + ' has booked ' + sel.station + ' at ' + fmtTime(clash.startsMs) + '. This session would run into it. Tap Start again to go ahead anyway.');
+    return;
+  }
+  busy = true;
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Starting';
+  var st = sel.station, slot = sel.slot, cus = sel.priceMode === 'cus' ? sel.custom : 0;
+  act({
+    api: 'start', station: st, slot: slot, players: sel.players,
+    phone: $('fPhone').value, name: $('fName').value.trim(), custom: cus,
+    reward: sel.reward ? 1 : 0, _rewardMin: sel.reward ? sel.rewardMin : 0,
+    booking: sel.booking, wait: sel.wait, ref: 'R' + uid()
+  }, function (res) {
+    busy = false;
+    btn.disabled = false;
+    btn.textContent = 'Start session';
+    if (!res || !res.ok) { errBox('sErr', (res && res.error) || 'Could not start the session.'); refresh(); return; }
+    if (res.state) apply(res.state);
+    closeSheets();
+    beep(TONE_OK);
+    if (res.queued) toast(st + ' started offline', 'It will sync when the connection is back', 'warn', 5000);
+    else toast(st + ' started', slot + (cus ? ' at ' + rs(cus) : '') + (sel.reward ? ', reward used' : ''), 'good', 4000);
+  });
+};
+
+$('sRepair').onclick = function () { openRepair(sel.station); };
+
+var mctx = {};
+
+function openManage(key) {
+  var x = sessOf(S, key);
+  if (!x) return;
+  var s = x.s;
+  mctx = { key: key, pay: '', custom: s.custom || 0, panel: '', timeSlot: '', moveTo: '', cancelArm: false };
+  $('mCustom').value = s.custom > 0 ? s.custom : '';
+  $('mRemarks').value = '';
+  errBox('mErr', '');
+  chip($('mPay'), S.payModes.map(function (m) { return { value: m, html: '<b>' + esc(m) + '</b>' }; }), function (v) { mctx.pay = v; }, '');
+  $('mCancel').textContent = 'Cancel, no charge';
+  $('mCancel').className = 'btn warn';
+  showPanel('');
+  openSheet('manageSheet');
+  paintManage();
+}
+
+function currentSession() {
+  var x = sessOf(S, mctx.key);
+  return x ? x : null;
+}
+
+function paintManage() {
+  if (!$('manageSheet').classList.contains('on')) return;
+  var x = currentSession();
+  if (!x) { closeSheets(); toast('That session was closed', 'Another device may have ended it', '', 4000); return; }
+  var s = x.s;
+  $('mTitle').textContent = x.station + (s.pending ? ' (waiting to sync)' : '');
+  $('mSub').textContent = s.customer + ', ' + s.slot + (s.extendMin > 0 ? ' +' + s.extendMin + ' min' : '') + ', ' + plural(s.players, 'player') +
+    (s.rateStation && s.rateStation !== x.station ? ', billed at ' + s.rateStation + ' rates' : '');
+  var pb = $('mPause');
+  pb.textContent = s.pausedAtMs ? 'Resume' : 'Pause';
+  pb.className = 'mbtn' + (s.pausedAtMs ? ' blue' : '');
+  var btns = document.querySelectorAll('#manageSheet [data-panel]');
+  for (var i = 0; i < btns.length; i++) btns[i].className = 'mbtn' + (btns[i].getAttribute('data-panel') === mctx.panel ? ' on' : '');
+  $('mCustomHint').textContent = 'Standard is ' + rs(s.standard) + '. Overtime is worked out from the price charged.';
+  if (mctx.panel === 'snacks') paintMenu();
+  paintManageBill();
+}
+
+function paintManageBill() {
+  var x = currentSession();
+  if (!x) return;
+  var s = x.s;
+  var b = calcBill(s, serverNow(), mctx.custom);
+  var h = '<div class="r"><span>Played</span><span>' + b.played + ' of ' + b.booked + ' min</span></div>';
+  if (s.pausedAtMs || b.pausedMin >= 1 || s.pauseCount) {
+    h += '<div class="r pz"><span>' + (s.pausedAtMs ? 'Paused now' : 'Paused ' + plural(s.pauseCount, 'time')) + '</span><span>' + Math.round(b.pausedMin) + ' min, not charged</span></div>';
+  }
+  if (b.custom > 0) {
+    h += '<div class="r"><span>Custom rate</span><span>' + rs(b.base) + '</span></div>' +
+      '<div class="r"><span>Standard price</span><span>' + rs(b.standard) + '</span></div>';
+  } else {
+    h += '<div class="r"><span>Slot price</span><span>' + rs(b.base) + '</span></div>';
+  }
+  if (s.extendCharge > 0) h += '<div class="r"><span>Extra time, ' + s.extendMin + ' min</span><span>' + rs(s.extendCharge) + '</span></div>';
+  if (b.extras > 0) h += '<div class="r ot"><span>Overtime, ' + b.over + ' min</span><span>' + rs(b.extras) + '</span></div>';
+  (s.items || []).forEach(function (it) {
+    h += '<div class="r"><span>' + esc(it.item) + (it.qty > 1 ? ' x' + it.qty : '') + '</span><span>' + rs(it.amount) +
+      '<button class="rm" data-sid="' + esc(it.sid) + '" aria-label="Remove">&times;</button></span></div>';
+  });
+  if (b.reward > 0) h += '<div class="r gd"><span>Reward, ' + s.rewardMin + ' free min</span><span>-' + rs(b.reward) + '</span></div>';
+  h += '<div class="r tot"><span>Collect</span><span>' + rs(b.total) + '</span></div>';
+  var bill = $('mBill');
+  if (bill.getAttribute('data-h') === h) return;
+  bill.setAttribute('data-h', h);
+  bill.innerHTML = h;
+  var rms = bill.querySelectorAll('.rm');
+  for (var i = 0; i < rms.length; i++) {
+    rms[i].onclick = (function (sid) { return function () { removeSnack(sid); }; })(rms[i].getAttribute('data-sid'));
+  }
+}
+
+function showPanel(name) {
+  mctx.panel = name;
+  $('pTime').classList.toggle('hidden', name !== 'time');
+  $('pSnacks').classList.toggle('hidden', name !== 'snacks');
+  $('pMove').classList.toggle('hidden', name !== 'move');
+  var x = currentSession();
+  if (!x) return;
+  var s = x.s;
+  if (name === 'time') {
+    mctx.timeSlot = '';
+    $('mTimeGo').textContent = 'Pick how much time to add';
+    var list = slotsFor(s.rateStation || x.station, s.players).filter(function (t) { return t.price > 0; });
+    if (!list.length) $('mTimeChips').innerHTML = '<div class="empty" style="grid-column:1/-1">No prices for this station and player count.</div>';
+    else chip($('mTimeChips'), list.map(function (t) {
+      return { value: t.name, html: '<b>+' + esc(t.name) + '</b><small>' + rs(t.price) + '</small>' };
+    }), function (v) {
+      mctx.timeSlot = v;
+      var p = priceOf(S, s.rateStation || x.station, v, s.players);
+      $('mTimeGo').textContent = 'Add ' + v + ' for ' + rs(p ? p.price : 0);
+    }, '');
+  }
+  if (name === 'snacks') paintMenu();
+  if (name === 'move') {
+    mctx.moveTo = '';
+    $('mMoveGo').textContent = 'Pick a station';
+    var free = freeStations('Any');
+    if (!free.length) $('mMoveChips').innerHTML = '<div class="empty" style="grid-column:1/-1">No other station is free.</div>';
+    else chip($('mMoveChips'), free.map(function (f) {
+      return { value: f.station, html: '<b>' + esc(f.station) + '</b><small>' + esc(f.type) + '</small>' };
+    }), function (v) { mctx.moveTo = v; $('mMoveGo').textContent = 'Move to ' + v; }, '');
+  }
+  var btns = document.querySelectorAll('#manageSheet [data-panel]');
+  for (var i = 0; i < btns.length; i++) btns[i].className = 'mbtn' + (btns[i].getAttribute('data-panel') === name ? ' on' : '');
+}
+
+var panelBtns = document.querySelectorAll('#manageSheet [data-panel]');
+for (var pi = 0; pi < panelBtns.length; pi++) {
+  panelBtns[pi].onclick = (function (b) {
+    return function () {
+      var n = b.getAttribute('data-panel');
+      showPanel(mctx.panel === n ? '' : n);
+    };
+  })(panelBtns[pi]);
+}
+
+function paintMenu() {
+  var host = $('mMenu');
+  var menu = (S && S.menu) || [];
+  if (!menu.length) { host.innerHTML = '<div class="empty">No snacks on the menu. Add items on the Menu tab of the sheet.</div>'; return; }
+  host.innerHTML = '';
+  menu.forEach(function (m) {
+    var out = m.stock !== '' && m.stock <= 0;
+    var row = document.createElement('div');
+    row.className = 'mi';
+    row.innerHTML = '<div><b>' + esc(m.item) + '</b><small>' + rs(m.price) + (m.stock !== '' ? ', ' + (out ? 'out of stock' : m.stock + ' left') : '') + '</small></div>';
+    var b = document.createElement('button');
+    b.className = 'tiny go';
+    b.textContent = 'Add';
+    b.disabled = out;
+    if (out) b.style.opacity = '.35';
+    b.onclick = function () { addSnack(m.item, b); };
+    row.appendChild(b);
+    host.appendChild(row);
+  });
+}
+
+function sessionParams(extra) {
+  var x = currentSession();
+  if (!x) return null;
+  var p = { id: x.s.id, ref: skey(x.s) };
+  for (var k in extra) p[k] = extra[k];
+  return p;
+}
+
+function addSnack(item, btn) {
+  var p = sessionParams({ api: 'snackAdd', item: item, qty: 1 });
+  if (!p || busy) return;
+  busy = true;
+  btn.disabled = true;
+  btn.textContent = 'Adding';
+  act(p, function (res) {
+    busy = false;
+    btn.disabled = false;
+    btn.textContent = 'Add';
+    if (!res || !res.ok) { errBox('mErr', (res && res.error) || 'Could not add that item.'); return; }
+    errBox('mErr', '');
+    if (res.state) apply(res.state);
+    toast(item + ' added', '', 'good', 1800);
+  });
+}
+
+function removeSnack(sid) {
+  if (busy) return;
+  busy = true;
+  act({ api: 'snackRemove', sid: sid }, function (res) {
+    busy = false;
+    if (!res || !res.ok) { errBox('mErr', (res && res.error) || 'Could not remove that item.'); return; }
+    if (res.state) apply(res.state);
+  });
+}
+
+function togglePause(key) {
+  var x = sessOf(S, key || mctx.key);
+  if (!x) return;
+  var s = x.s;
+  var api = s.pausedAtMs ? 'resume' : 'pause';
+  act({ api: api, id: s.id, ref: skey(s) }, function (res) {
+    if (!res || !res.ok) { toast('Could not ' + api, (res && res.error) || '', 'warn'); refresh(); return; }
+    if (res.state) apply(res.state);
+    else render();
+    beep(TONE_PAUSE);
+    toast(x.station + (api === 'pause' ? ' paused' : ' resumed'), res.queued ? 'Saved offline, it will sync' : (api === 'pause' ? 'The timer is frozen and paused time is not charged' : 'The timer is running again'), res.queued ? 'warn' : '', 3000);
+  });
+}
+
+$('mPause').onclick = function () { togglePause(mctx.key); };
+
+$('mTimeGo').onclick = function () {
+  if (!mctx.timeSlot || busy) return;
+  var p = sessionParams({ api: 'extend', slot: mctx.timeSlot });
+  if (!p) return;
+  busy = true;
+  var btn = this;
+  btn.disabled = true;
+  act(p, function (res) {
+    busy = false;
+    btn.disabled = false;
+    if (!res || !res.ok) { errBox('mErr', (res && res.error) || 'Could not add time.'); return; }
+    errBox('mErr', '');
+    if (res.state) apply(res.state);
+    toast('Added ' + mctx.timeSlot, 'The timer has been extended', 'good', 3000);
+    showPanel('');
+  });
+};
+
+$('mMoveGo').onclick = function () {
+  if (!mctx.moveTo || busy) return;
+  var p = sessionParams({ api: 'move', to: mctx.moveTo });
+  if (!p) return;
+  busy = true;
+  var btn = this;
+  btn.disabled = true;
+  var to = mctx.moveTo;
+  act(p, function (res) {
+    busy = false;
+    btn.disabled = false;
+    if (!res || !res.ok) { errBox('mErr', (res && res.error) || 'Could not move the session.'); return; }
+    errBox('mErr', '');
+    if (res.state) apply(res.state);
+    toast('Moved to ' + to, 'The timer and bill carried over', 'good', 3000);
+    showPanel('');
+  });
+};
+
+$('mCustom').addEventListener('input', function () {
+  mctx.custom = Number(this.value) || 0;
+  paintManageBill();
+});
+
+$('mGo').onclick = function () {
+  if (busy) return;
+  errBox('mErr', '');
+  if (!mctx.pay) { errBox('mErr', 'Pick how the customer paid.'); return; }
+  var x = currentSession();
+  if (!x) return;
+  var local = calcBill(x.s, serverNow(), mctx.custom);
+  var p = sessionParams({ api: 'end', pay: mctx.pay, custom: mctx.custom || 0, remarks: $('mRemarks').value });
+  busy = true;
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Closing';
+  var pay = mctx.pay;
+  act(p, function (res) {
+    busy = false;
+    btn.disabled = false;
+    btn.textContent = 'Collect and close';
+    if (!res || !res.ok) { errBox('mErr', (res && res.error) || 'Could not close the session.'); refresh(); return; }
+    if (res.summary) SUM = res.summary;
+    if (res.state) apply(res.state);
+    closeSheets();
+    beep(TONE_OK);
+    toast('Collected ' + rs(res.total !== undefined ? res.total : local.total), 'Paid by ' + pay + (res.queued ? ', saved offline' : ''), res.queued ? 'warn' : 'good', 5000);
+  });
+};
+
+$('mCancel').onclick = function () {
+  if (busy) return;
+  var btn = this;
+  if (!mctx.cancelArm) {
+    mctx.cancelArm = true;
+    btn.textContent = 'Tap again to cancel';
+    btn.className = 'btn warn armed';
+    setTimeout(function () { mctx.cancelArm = false; btn.textContent = 'Cancel, no charge'; btn.className = 'btn warn'; }, 3500);
+    return;
+  }
+  var p = sessionParams({ api: 'cancel' });
+  if (!p) return;
+  busy = true;
+  btn.disabled = true;
+  act(p, function (res) {
+    busy = false;
+    btn.disabled = false;
+    if (!res || !res.ok) { errBox('mErr', (res && res.error) || 'Could not cancel.'); return; }
+    if (res.state) apply(res.state);
+    closeSheets();
+    toast('Session cancelled', 'Nothing was charged and snacks were returned to stock', '', 4000);
+  });
+};
+
+var expCtx = { mode: 'Cash' };
+$('btnAddExp').onclick = function () {
+  expCtx = { mode: 'Cash' };
+  $('xAmt').value = '';
+  $('xTo').value = '';
+  $('xNotes').value = '';
+  errBox('xErr', '');
+  var cats = $('xCat');
+  cats.innerHTML = '';
+  ((S && S.expenseCats) || []).forEach(function (c) {
+    var o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    cats.appendChild(o);
+  });
+  chip($('xMode'), S.payModes.map(function (m) { return { value: m, html: '<b>' + esc(m) + '</b>' }; }), function (v) { expCtx.mode = v; }, 'Cash');
+  openSheet('expSheet');
+};
+
+$('xGo').onclick = function () {
+  if (busy) return;
+  errBox('xErr', '');
+  var amt = Number($('xAmt').value);
+  if (!amt || amt <= 0) { errBox('xErr', 'Enter how much was spent.'); return; }
+  busy = true;
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Saving';
+  act({ api: 'expense', amount: amt, cat: $('xCat').value, paidTo: $('xTo').value, mode: expCtx.mode, notes: $('xNotes').value }, function (res) {
+    busy = false;
+    btn.disabled = false;
+    btn.textContent = 'Save expense';
+    if (!res || !res.ok) { errBox('xErr', (res && res.error) || 'Could not save the expense.'); return; }
+    SUM = res.summary;
+    renderMoney();
+    closeSheets();
+    toast('Expense saved', rs(amt) + ' logged', 'good', 4000);
+  });
+};
+
+var cctx = { qty: {}, pay: 'Cash' };
+function paintCounter() {
+  var host = $('cMenu');
+  var menu = (S && S.menu) || [];
+  var total = 0;
+  if (!menu.length) { host.innerHTML = '<div class="empty">No snacks on the menu. Add items on the Menu tab of the sheet.</div>'; $('cTotal').textContent = rs(0); return; }
+  host.innerHTML = '';
+  menu.forEach(function (m) {
+    var q = cctx.qty[m.item] || 0;
+    total += q * m.price;
+    var row = document.createElement('div');
+    row.className = 'mi';
+    row.innerHTML = '<div><b>' + esc(m.item) + '</b><small>' + rs(m.price) + (m.stock !== '' ? ', ' + m.stock + ' left' : '') + '</small></div>' +
+      '<div class="step"><button data-d="-1" aria-label="Less">&minus;</button><span>' + q + '</span><button data-d="1" aria-label="More">+</button></div>';
+    var bs = row.querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].onclick = (function (d) {
+        return function () {
+          var n = Math.max(0, (cctx.qty[m.item] || 0) + d);
+          if (m.stock !== '' && n > m.stock) { toast('Only ' + m.stock + ' ' + m.item + ' left', '', 'warn', 2500); return; }
+          cctx.qty[m.item] = n;
+          paintCounter();
+        };
+      })(Number(bs[i].getAttribute('data-d')));
+    }
+    host.appendChild(row);
+  });
+  $('cTotal').textContent = rs(total);
+}
+
+$('btnCounter').onclick = function () {
+  cctx = { qty: {}, pay: 'Cash' };
+  errBox('cErr', '');
+  chip($('cPay'), S.payModes.filter(function (m) { return m !== 'Pending'; }).map(function (m) { return { value: m, html: '<b>' + esc(m) + '</b>' }; }), function (v) { cctx.pay = v; }, 'Cash');
+  paintCounter();
+  openSheet('saleSheet');
+};
+
+$('cGo').onclick = function () {
+  if (busy) return;
+  var items = [];
+  for (var k in cctx.qty) if (cctx.qty[k] > 0) items.push({ item: k, qty: cctx.qty[k] });
+  if (!items.length) { errBox('cErr', 'Add at least one item.'); return; }
+  busy = true;
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Saving';
+  act({ api: 'counterSale', items: JSON.stringify(items), pay: cctx.pay }, function (res) {
+    busy = false;
+    btn.disabled = false;
+    btn.textContent = 'Save sale';
+    if (!res || !res.ok) { errBox('cErr', (res && res.error) || 'Could not save the sale.'); return; }
+    if (res.summary) SUM = res.summary;
+    if (res.state) apply(res.state);
+    closeSheets();
+    beep(TONE_OK);
+    toast('Sale saved', rs(res.total) + ' by ' + cctx.pay, 'good', 4000);
+  });
+};
+
+$('btnAddWait').onclick = function () {
+  $('wName').value = '';
+  $('wPhone').value = '';
+  $('wNotes').value = '';
+  $('wPlayers').value = '1';
+  errBox('wErr', '');
+  var types = ['Any'];
+  (S.stations || []).forEach(function (x) { if (types.indexOf(x.type) === -1) types.push(x.type); });
+  $('wWants').innerHTML = types.map(function (t) { return '<option>' + esc(t) + '</option>'; }).join('');
+  openSheet('waitSheet');
+};
+
+$('wGo').onclick = function () {
+  if (busy) return;
+  var name = $('wName').value.trim(), phone = $('wPhone').value.trim();
+  if (!name && !phone) { errBox('wErr', 'Add a name or phone.'); return; }
+  busy = true;
+  var btn = this;
+  btn.disabled = true;
+  act({ api: 'waitAdd', name: name, phone: phone, players: $('wPlayers').value, wants: $('wWants').value, notes: $('wNotes').value }, function (res) {
+    busy = false;
+    btn.disabled = false;
+    if (!res || !res.ok) { errBox('wErr', (res && res.error) || 'Could not add to the waitlist.'); return; }
+    if (res.state) apply(res.state);
+    closeSheets();
+    toast((name || phone) + ' added to the waitlist', '', 'good', 3000);
+  });
+};
+
+function fillBookPlayers() {
+  var x = stationOf(S, $('bStation').value);
+  var max = x ? x.max : 1;
+  var cur = Number($('bPlayers').value) || 1;
+  var h = '';
+  for (var i = 1; i <= max; i++) h += '<option value="' + i + '">' + i + '</option>';
+  $('bPlayers').innerHTML = h;
+  $('bPlayers').value = String(Math.min(cur, max));
+  fillBookSlots();
+}
+
+function fillBookSlots() {
+  var list = slotsFor($('bStation').value, Number($('bPlayers').value) || 1).filter(function (s) { return s.price > 0; });
+  $('bSlot').innerHTML = list.length
+    ? list.map(function (s) { return '<option value="' + esc(s.name) + '">' + esc(s.name) + ' (' + rs(s.price) + ')</option>'; }).join('')
+    : '<option value="">No prices set</option>';
+}
+
+$('bStation').onchange = fillBookPlayers;
+$('bPlayers').onchange = fillBookSlots;
+
+$('btnAddBook').onclick = function () {
+  var now = serverNow() + 30 * 60000;
+  var d = new Date(now);
+  var mins = Math.ceil(d.getMinutes() / 15) * 15;
+  if (mins === 60) { d.setHours(d.getHours() + 1); mins = 0; }
+  $('bDate').value = dkey(now);
+  $('bTime').value = pad(d.getHours()) + ':' + pad(mins);
+  $('bStation').innerHTML = S.stations.filter(function (x) { return !x.repair; }).map(function (x) {
+    return '<option value="' + esc(x.station) + '">' + esc(x.station) + '</option>';
+  }).join('');
+  $('bPlayers').innerHTML = '<option value="1">1</option>';
+  $('bName').value = '';
+  $('bPhone').value = '';
+  $('bNotes').value = '';
+  errBox('bErr', '');
+  fillBookPlayers();
+  openSheet('bookSheet');
+};
+
+$('bGo').onclick = function () {
+  if (busy) return;
+  errBox('bErr', '');
+  if (!$('bStation').value) { errBox('bErr', 'Pick a station.'); return; }
+  if (!$('bSlot').value) { errBox('bErr', 'This station has no prices for that player count.'); return; }
+  if (!$('bName').value.trim() && !$('bPhone').value.trim()) { errBox('bErr', 'Add a name or phone.'); return; }
+  busy = true;
+  var btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Saving';
+  act({
+    api: 'bookAdd', date: $('bDate').value, time: $('bTime').value, station: $('bStation').value,
+    players: $('bPlayers').value, slot: $('bSlot').value, name: $('bName').value.trim(), phone: $('bPhone').value.trim(), notes: $('bNotes').value
+  }, function (res) {
+    busy = false;
+    btn.disabled = false;
+    btn.textContent = 'Save booking';
+    if (!res || !res.ok) { errBox('bErr', (res && res.error) || 'Could not save the booking.'); return; }
+    if (res.state) apply(res.state);
+    closeSheets();
+    toast('Booking saved', $('bStation').value + ' at ' + $('bTime').value, 'good', 4000);
+  });
+};
+
+function openPicker(title, sub, list, cb) {
+  $('pkTitle').textContent = title;
+  $('pkSub').textContent = sub || '';
+  chip($('pkChips'), list.map(function (x) {
+    return { value: x.station, html: '<b>' + esc(x.station) + '</b><small>' + esc(x.type) + '</small>' };
+  }), function (v) { cb(v); }, '');
+  openSheet('pickSheet');
+}
+
+var repCtx = { station: '', on: false };
+function openRepair(station) {
+  var x = stationOf(S, station);
+  if (!x) return;
+  repCtx = { station: station, on: !x.repair };
+  $('rTitle').textContent = x.repair ? station + ' is under repair' : 'Mark ' + station + ' under repair';
+  $('rSub').textContent = x.repair ? (x.note ? 'Note: ' + x.note : 'No note was added.') + ' Put it back in service when it is fixed.' : 'It will show as unavailable and cannot be started until you put it back.';
+  $('rNoteWrap').classList.toggle('hidden', x.repair);
+  $('rNote').value = '';
+  $('rGo').textContent = x.repair ? 'Put back in service' : 'Mark under repair';
+  errBox('rErr', '');
+  openSheet('repairSheet');
+}
+
+$('rGo').onclick = function () {
+  if (busy) return;
+  busy = true;
+  var btn = this;
+  btn.disabled = true;
+  var c = repCtx;
+  act({ api: 'repair', station: c.station, on: c.on ? 1 : 0, note: $('rNote').value }, function (res) {
+    busy = false;
+    btn.disabled = false;
+    if (!res || !res.ok) { errBox('rErr', (res && res.error) || 'Could not update the station.'); return; }
+    if (res.state) apply(res.state);
+    closeSheets();
+    toast(c.station + (c.on ? ' marked under repair' : ' is back in service'), '', c.on ? 'warn' : 'good', 3000);
+  });
+};
+
+function paintPrefs() {
+  $('swSound').className = 'sw' + (PREFS.sound ? ' on' : '');
+  $('swNotify').className = 'sw' + (PREFS.notify ? ' on' : '');
+  $('swWake').className = 'sw' + (PREFS.wake ? ' on' : '');
+  $('cfgWarnEvery').value = String(PREFS.warnEvery);
+  $('cfgVol').value = String(PREFS.vol);
+}
+
+function togglePref(k) {
+  if (k === 'notify' && !PREFS.notify) {
+    if (!window.Notification) { toast('This browser cannot show notifications', '', 'warn'); return; }
+    Notification.requestPermission().then(function (r) {
+      PREFS.notify = (r === 'granted');
+      savePrefs(); paintPrefs();
+      if (!PREFS.notify) toast('Notifications are blocked', 'Allow them for this site in your browser settings', 'warn');
+    });
+    return;
+  }
+  PREFS[k] = !PREFS[k];
+  savePrefs(); paintPrefs();
+  if (k === 'sound' && PREFS.sound) beep(TONE_WARN);
+  if (k === 'wake') applyWake();
+}
+
+var swNodes = document.querySelectorAll('.sw');
+for (var swi = 0; swi < swNodes.length; swi++) {
+  swNodes[swi].onclick = (function (node) { return function () { togglePref(node.getAttribute('data-pref')); }; })(swNodes[swi]);
+}
+
+function warnHint() {
+  var m = (S && S.cfg && S.cfg.warnMin) || 10;
+  $('cfgTestHint').textContent = PREFS.warnEvery
+    ? 'The chime starts with ' + m + ' minutes left and repeats every ' + PREFS.warnEvery + ' seconds. The time up alarm runs for five seconds.'
+    : 'The chime plays once with ' + m + ' minutes left. The time up alarm runs for five seconds.';
+}
+
+$('cfgWarnEvery').onchange = function () {
+  PREFS.warnEvery = Number(this.value) || 0;
+  savePrefs();
+  warnClock = {};
+  warnHint();
+};
+
+$('cfgVol').onchange = function () {
+  PREFS.vol = Number(this.value) || 1;
+  savePrefs();
+  unlockAudio();
+  beep(TONE_WARN);
+};
+
+var wakeLock = null;
+function applyWake() {
+  try {
+    if (PREFS.wake && navigator.wakeLock) {
+      navigator.wakeLock.request('screen').then(function (w) { wakeLock = w; }).catch(function () {});
+    } else if (wakeLock) {
+      wakeLock.release();
+      wakeLock = null;
+    }
+  } catch (e) {}
+}
+
+$('btnTestWarn').onclick = function () {
+  unlockAudio();
+  beep(TONE_WARN);
+  buzz([200, 120, 200]);
+  toast('Warning chime', 'This is what staff hear near the end of a session', 'warn', 4000);
+};
+
+$('btnTestEnd').onclick = function () {
+  unlockAudio();
+  beep(TONE_END);
+  buzz([400, 150, 400, 150, 400, 150, 400, 150, 400]);
+  notify(document.title, 'Alerts are working.');
+  toast('Time up alarm', 'Five seconds, this is what time up sounds like', 'end', 6000);
+};
+
+$('btnCfg').onclick = function () {
+  $('cfgUrl').value = API;
+  errBox('cfgErr', '');
+  paintPrefs();
+  warnHint();
+  paintSync();
+  openSheet('cfgSheet');
+};
+
+$('syncPill').onclick = function () { $('btnCfg').onclick(); };
+$('btnSyncNow').onclick = function () { flushQueue(); refresh(); };
+$('btnRefresh').onclick = function () { refresh(); loadSummary(); };
+
+$('cfgSave').onclick = function () {
+  var v = $('cfgUrl').value.trim();
+  if (v.indexOf('/exec') === -1) { errBox('cfgErr', 'The address has to end in /exec. Copy it from Deploy, Manage deployments.'); return; }
+  API = v;
+  try { localStorage.setItem('gg_api', v); } catch (e) {}
+  closeSheets();
+  lastSync = 0;
+  booted = false;
+  $('app').classList.add('hidden');
+  $('nav').classList.add('hidden');
+  var b = $('boot');
+  b.classList.remove('hidden');
+  b.innerHTML = '<div class="sk"></div><div class="sk"></div><div class="sk"></div>';
+  refresh();
+};
+
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden) { refresh(); applyWake(); }
+});
+window.addEventListener('focus', refresh);
+window.addEventListener('online', function () { flushQueue(); refresh(); });
+window.addEventListener('offline', paintSync);
+
+paintPrefs();
+applyWake();
+setInterval(tick, 1000);
+setInterval(refresh, 12000);
+refresh();
+</script>
+</body>
+</html>
