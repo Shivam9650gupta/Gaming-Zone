@@ -653,7 +653,11 @@ function injected(attr) {
 }
 var SAVED_API = '';
 try { SAVED_API = localStorage.getItem('gg_api') || ''; } catch (e) {}
-var API = injected('data-api') || SAVED_API;
+var DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxYkDGqYnz6JuC5-hpkKL7vwiX24xdw6dcqu7JJrtKEKNwixCZmE1riwnXbXRQ08LFDsQ/exec';
+var URL_API = '';
+try { URL_API = new URLSearchParams(location.search).get('api') || ''; } catch (e) {}
+if (URL_API.indexOf('/exec') > -1) { try { localStorage.setItem('gg_api', URL_API); } catch (e) {} } else { URL_API = ''; }
+var API = injected('data-api') || URL_API || SAVED_API || DEFAULT_API;
 var BR = null;
 try { BR = JSON.parse(injected('data-brand') || 'null'); } catch (e) { BR = null; }
 var CUR = '\u20B9';
