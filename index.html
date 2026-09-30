@@ -990,6 +990,23 @@ function localApply(st, op) {
 }
 
 function apply(state) {
+  if (!state || !state.cfg || !state.pricing || !state.bookings) {
+    if (DEFAULT_API && API !== DEFAULT_API) {
+      API = DEFAULT_API;
+      try { localStorage.removeItem('gg_api'); } catch (e) {}
+      refresh();
+      return;
+    }
+    lastSync = 0;
+    booted = false;
+    $('app').classList.add('hidden');
+    $('nav').classList.add('hidden');
+    var b = $('boot');
+    b.classList.remove('hidden');
+    b.innerHTML = '<div class="bootmsg"><div class="err">This web app address is running an older version of the script.</div>' +
+      '<p>Open settings with the gear above and paste the /exec address of the new deployment.</p><p style="word-break:break-all">Current address: ' + esc(API) + '</p></div>';
+    return;
+  }
   S = state;
   offset = state.now - Date.now();
   lastSync = Date.now();
